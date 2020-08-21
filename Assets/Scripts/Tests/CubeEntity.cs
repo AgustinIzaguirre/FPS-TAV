@@ -45,9 +45,9 @@ public class CubeEntity
     public static CubeEntity CreateInterpolated(CubeEntity previous, CubeEntity next, float startTime, float endTime,float currentTime) {
         var cubeEntity = new CubeEntity(previous.cubeGameObject);
         cubeEntity.position += Interpolator.InterpolateVector3(previous.position, next.position, startTime,
-                                                                endTime, currentTime);
+            endTime, currentTime);
         cubeEntity.eulerAngles += Interpolator.InterpolateVector3(previous.eulerAngles, next.eulerAngles, 
-                                                                    startTime, endTime, currentTime);
+            startTime, endTime, currentTime);
         return cubeEntity;
     }
 }

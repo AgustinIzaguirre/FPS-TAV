@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 namespace Tests
@@ -23,6 +22,8 @@ namespace Tests
         }
         
         public void Serialize(BitBuffer buffer) {
+            // TODO replace with enum to diferentiate snapshot from ack
+            buffer.PutInt(0);
             buffer.PutInt(sequence);
             cubeEntity.Serialize(buffer);
         }
