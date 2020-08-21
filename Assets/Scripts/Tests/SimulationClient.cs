@@ -114,18 +114,34 @@ public class SimulationClient
     {
         Snapshot current = interpolationBuffer[0];
         Snapshot next = interpolationBuffer[1];
+        Snapshot last = interpolationBuffer[interpolationBuffer.Count - 1];
         float startTime = current.sequence * timeToSend;
         float endTime = next.sequence * timeToSend;
-        if (clientTime > endTime)
+        float lastTime = last.sequence * timeToSend;
+        if (lastTime - startTime > 1f)
         {
-            interpolationBuffer.RemoveAt(0);
+            ResetBufferAndClientTime(lastTime);
         }
-        
-        CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(current.cubeEntity, next.cubeEntity, 
-                                                                    startTime, endTime, clientTime);
-        interpolatedCube.Apply();
+        else
+        {
+            if (clientTime > endTime)
+            {
+                interpolationBuffer.RemoveAt(0);
+            }
+
+            CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(current.cubeEntity, next.cubeEntity,
+                startTime, endTime, clientTime);
+            interpolatedCube.Apply();
+        }
     }
-    
+
+    private void ResetBufferAndClientTime(float lastTime)
+    {
+        clientTime = lastTime;
+        interpolationBuffer = new List<Snapshot>();
+        render = false;
+    }
+
 
     private void AddToInterpolationBuffer(Snapshot currentSnapshot)
     {
