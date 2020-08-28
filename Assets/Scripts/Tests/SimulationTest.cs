@@ -8,6 +8,7 @@ public class SimulationTest : MonoBehaviour
     private Rigidbody cubeServerRigidBody;
     private int packetsPerSecond = 60;
     public int minSnapshots = 3;
+    public float timeoutForEvents;
     private float timeToSend;
     private bool connected = true;
     private SimulationClient client;
@@ -16,8 +17,10 @@ public class SimulationTest : MonoBehaviour
     void Start()
     {
         timeToSend = (float)1 / (float)packetsPerSecond;
-        client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend);
+        timeoutForEvents = 1f;
+        client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend, timeoutForEvents);
         server = new SimulationServer(9001, cubeServer, timeToSend);
+        Application.targetFrameRate = 60;
     }
 
     private void OnDestroy() {

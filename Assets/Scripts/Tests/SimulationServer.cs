@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using Tests;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class SimulationServer
 {
@@ -12,6 +13,7 @@ public class SimulationServer
     private float elapsedTime;
     private int sequence;
     private int lastInputApplied;
+    private float serverTime;
 
     public SimulationServer(int portNumber, GameObject cube, float timeToSend)
     {
@@ -22,11 +24,13 @@ public class SimulationServer
         sequence = 0;
         elapsedTime = 0f;
         lastInputApplied = 0;
+        serverTime = 0f;
     }
     
      public void UpdateServer()
     {
         elapsedTime += Time.deltaTime;
+        serverTime += Time.deltaTime;
         ReceiveInputs();
         if (elapsedTime >= timeToSend)
         {
@@ -49,22 +53,36 @@ public class SimulationServer
     private void ReceiveInputs()
     {
         var packet = channel.GetPacket();
-        
-        if (packet == null) {
-            return;
+
+        while (packet != null)
+        {
+            int packetType = packet.buffer.GetInt();
+            if (packetType == (int) PacketType.INPUT)
+            {
+                int startInput = packet.buffer.GetInt();
+                List<int> inputsToExecute = GameInput.Deserialize(packet.buffer);
+                int ackNumber = packet.buffer.GetInt();
+                SendAck(ackNumber, PacketType.ACK);
+                ApplyInputs(startInput, inputsToExecute);
+                lastInputApplied = ackNumber;
+            }
+            else if(packetType ==(int) PacketType.EVENT)
+            {
+                 // handle event   
+                 GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
+                 Debug.Log("Event received: " + currentEvent.eventNumber);
+                 SendAck(currentEvent.eventNumber, PacketType.EVENT);
+            }
+            packet.Free();
+            packet = channel.GetPacket();
+            
         }
-        int startInput = packet.buffer.GetInt();
-        List<int> inputsToExecute = GameInput.Deserialize(packet.buffer);
-        int ackNumber = packet.buffer.GetInt();
-        SendACK(ackNumber);
-        ApplyInputs(startInput, inputsToExecute);
-        lastInputApplied = ackNumber;
     }
 
-    private void SendACK(int ackNumber)
+    private void SendAck(int ackNumber, PacketType packetType)
     {
         var packet = Packet.Obtain();
-        packet.buffer.PutInt((int)PacketType.ACK);
+        packet.buffer.PutInt((int) packetType);
         packet.buffer.PutInt(ackNumber);
         packet.buffer.Flush();
         string serverIP = "127.0.0.1";
