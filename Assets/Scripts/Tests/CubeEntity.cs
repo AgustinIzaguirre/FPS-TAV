@@ -14,23 +14,27 @@ public class CubeEntity
         var transform = cubeGameObject.transform;
         var position = transform.position;
         var eulerAngles = transform.eulerAngles;
-        buffer.PutFloat(position.x);
+        FloatSerializer.SerializeFloat(buffer, position.x, -40, 40, 0.001f);
+//        buffer.PutFloat(position.x);
         buffer.PutFloat(position.y);
-        buffer.PutFloat(position.z);
-        buffer.PutFloat(eulerAngles.x);
-        buffer.PutFloat(eulerAngles.y);
-        buffer.PutFloat(eulerAngles.z);
+        FloatSerializer.SerializeFloat(buffer, position.z, -40, 40, 0.001f);
+//        buffer.PutFloat(position.z);
+        DegreeAngle.SerializeAngle(buffer, eulerAngles.x);
+        DegreeAngle.SerializeAngle(buffer, eulerAngles.y);
+        DegreeAngle.SerializeAngle(buffer, eulerAngles.z);
     }
 
     public void Deserialize(BitBuffer buffer) {
         position = new Vector3();
         eulerAngles = new Vector3();
-        position.x = buffer.GetFloat();
+        position.x = FloatSerializer.DeserializeFloat(buffer, -40, 40, 0.001f);
+//        position.x = buffer.GetFloat();
         position.y = buffer.GetFloat();
-        position.z = buffer.GetFloat();
-        eulerAngles.x = buffer.GetFloat();
-        eulerAngles.y = buffer.GetFloat();
-        eulerAngles.z = buffer.GetFloat();
+        position.z = FloatSerializer.DeserializeFloat(buffer, -40, 40, 0.001f);
+//        position.z = buffer.GetFloat();
+        eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
+        eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
+        eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
         cubeGameObject.transform.position = position;
         cubeGameObject.transform.eulerAngles = eulerAngles;
     }

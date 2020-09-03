@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.IO;
 using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 public class BitBuffer {
@@ -85,7 +86,12 @@ public class BitBuffer {
 	public void PutInt(int value) {
 		PutBits(value, int.MinValue, int.MaxValue);
 	}
-		
+
+	public void PutInt(int value, int minValue, int maxValue)
+	{
+		PutBits(value, minValue, maxValue);
+	}
+	
 	public void PutLong(long value) {
 		PutBits((int) ((value >> 32) & 0x00000000ffffffffL), int.MinValue, int.MaxValue);
 		PutBits((int) (value & 0x00000000ffffffffL), int.MinValue, int.MaxValue);
@@ -186,6 +192,12 @@ public class BitBuffer {
 	public int GetInt() {
 		return (int)GetBits(int.MinValue, int.MaxValue);
 	}
+
+	public int GetInt(int minValue, int maxValue)
+	{
+		return (int) GetBits(minValue, maxValue);
+	}
+
 
 	public long GetLong() {
 		long leftValue = GetBits(int.MinValue, int.MaxValue);
