@@ -16,14 +16,11 @@ public class SimulationServer
     private int lastInputApplied;
     private float serverTime;
 
-    public SimulationServer(IPEndPoint endPoint, GameObject cube, float timeToSend, GameObject serverPrefab)
+    public SimulationServer(IPEndPoint endPoint, float timeToSend, GameObject serverPrefab)
     {
         channel = new Channel(endPoint.Port);
         clientsCubes = new Dictionary<int, GameObject>();
         clients = new Dictionary<int, ClientInfo>();
-        // TODO remove this hardcoded client
-        clients[2] = new ClientInfo(2, new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000));
-        clientsCubes[2] = cube;
         this.serverPrefab = serverPrefab;
         this.timeToSend = timeToSend;
         sequence = 0;
@@ -51,17 +48,14 @@ public class SimulationServer
          foreach (var clientId in clients.Keys)
          {
              //serialize
-//             if (clientId == 2) // TODO remove if on production
-//             {
-                 var packet = Packet.Obtain();
-                 sequence++;
-                 CubeEntity cubeEntity = new CubeEntity(clientsCubes[clientId]);
-                 Snapshot currentSnapshot = new Snapshot(sequence, cubeEntity, currentWorldInfo);
-                 currentSnapshot.Serialize(packet.buffer);
-                 packet.buffer.Flush();
-                 channel.Send(packet, clients[clientId].endPoint);
-                 packet.Free();
-//             }
+             var packet = Packet.Obtain();
+             sequence++;
+             CubeEntity cubeEntity = new CubeEntity(clientsCubes[clientId]);
+             Snapshot currentSnapshot = new Snapshot(sequence, cubeEntity, currentWorldInfo);
+             currentSnapshot.Serialize(packet.buffer);
+             packet.buffer.Flush();
+             channel.Send(packet, clients[clientId].endPoint);
+             packet.Free();
          }   
      }
 
@@ -136,7 +130,6 @@ public class SimulationServer
             packet.buffer.PutInt(clientId);
             newClient.Serialize(packet.buffer);
             packet.buffer.Flush();
-//        Debug.Log("sending response to port = " + clientEndpoint.Port.ToString());
             channel.Send(packet, clientEndpoint);
         }
         
@@ -154,8 +147,6 @@ public class SimulationServer
 
     private void ApplyInputs(int clientId, int startInput, List<int> inputsToExecute)
     {
-//        Debug.Log("input from clientId = " + clientId);
-
         for (int i = 0; i < inputsToExecute.Count; i++)
         {
             if (clients[clientId].lastInputApplied < startInput + i)

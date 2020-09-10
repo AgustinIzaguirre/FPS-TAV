@@ -24,36 +24,13 @@ public class SimulationClient
     private int id;
     public bool isPlaying;
     private IPEndPoint serverEndPoint;
-    
-    public SimulationClient(int portNumber, GameObject cube, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint, GameObject clientPrefab)
-    {
-        channel = new Channel(portNumber);
-        interpolationBuffer = new List<Snapshot>();
-        players = new Dictionary<int, GameObject>();
-        players[id] = cube;
-        sentInputs = new List<int>();
-        sentEvents = new List<GameEvent>();
-        render = false;
-        this.cube = cube;
-        this.minSnapshots = minSnapshots;
-        this.timeToSend = timeToSend;
-        this.timeout = timeout;
-        this.id = id;
-        this.serverEndPoint = serverEndPoint;
-        this.clientPrefab = clientPrefab;
-        lastInputSent = 1;
-        clientTime = 0f;
-        eventNumber = 0;
-        isPlaying = true;
-        
-    }
-    
+
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
+        players = new Dictionary<int, GameObject>();
         sentInputs = new List<int>();
         sentEvents = new List<GameEvent>();
         render = false;
@@ -86,7 +63,7 @@ public class SimulationClient
                 int packetType = packet.buffer.GetInt();
                 if (packetType == (int) PacketType.SNAPSHOT)
                 {
-                    CubeEntity cubeEntity = new CubeEntity(cube);
+                    CubeEntity cubeEntity = new CubeEntity(players[id]);
                     Snapshot currentSnapshot = new Snapshot(cubeEntity);
                     currentSnapshot.Deserialize(packet.buffer);
                     AddToInterpolationBuffer(currentSnapshot);
@@ -234,22 +211,25 @@ public class SimulationClient
             {
                 interpolationBuffer.RemoveAt(0);
             }
-
             WorldInfo currentWorldInfo = current.worldInfo;
             WorldInfo nextWorldInfo = next.worldInfo;
-            foreach (var playerId in currentWorldInfo.players.Keys)
+            if (currentWorldInfo.players != null && nextWorldInfo.players != null)
             {
-                CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
-                if (nextWorldInfo.players.ContainsKey(playerId) && players.ContainsKey(playerId))
+                foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
-                    CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity, nextCubeEntity,
-                        startTime, endTime, clientTime, players[playerId]);
-                    interpolatedCube.Apply();
+                    if (currentWorldInfo.players.ContainsKey(playerId) && nextWorldInfo.players.ContainsKey(playerId) &&
+                        players.ContainsKey(playerId))
+                    {
+                        CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
 
+                        CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
+                        CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity, nextCubeEntity,
+                            startTime, endTime, clientTime, players[playerId]);
+                        interpolatedCube.Apply();
+
+                    }
                 }
             }
-            
         }
     }
 
@@ -292,7 +272,7 @@ public class SimulationClient
     {
         Vector3 position = clientCube.position;
         Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
-        cube = GameObject.Instantiate(clientCube.cubeGameObject, position, rotation) as GameObject;
+        players[id] = Object.Instantiate(clientCube.cubeGameObject, position, rotation) as GameObject;
         isPlaying = true;
     }
     

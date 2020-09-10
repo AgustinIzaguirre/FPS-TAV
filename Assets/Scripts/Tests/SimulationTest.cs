@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class SimulationTest : MonoBehaviour
 {
-    [SerializeField] private GameObject cubeServer;
-    [SerializeField] private GameObject cubeClient;
     [SerializeField] private GameObject serverPrefab;
     [SerializeField] private GameObject clientPrefab;
 
@@ -29,11 +27,8 @@ public class SimulationTest : MonoBehaviour
         serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9001);
         clients = new Dictionary<int, SimulationClient>();
         sentJoinEvents = new List<JoinEvent>();
-        SimulationClient client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend, 
-                                                        timeoutForEvents, 2, serverEndPoint, clientPrefab);
         lastClientId = 2;
-        clients[lastClientId] = client;
-        server = new SimulationServer(serverEndPoint, cubeServer, timeToSend, serverPrefab);
+        server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
         Application.targetFrameRate = 60;
         time = 0f;
     }
@@ -100,6 +95,7 @@ public class SimulationTest : MonoBehaviour
     {
         Channel clientChannel = currentClient.GetChannel();
         var packet = clientChannel.GetPacket();
+
         while (packet != null)
         {
             int packetType = packet.buffer.GetInt();
@@ -107,7 +103,7 @@ public class SimulationTest : MonoBehaviour
             {
                 int clientId = packet.buffer.GetInt();
                 // TODO remove on production
-                if (clientId == 2)
+                if (clientId == 3)
                 {
                     CubeEntity clientCube = new CubeEntity(clientPrefab);
                     clientCube.Deserialize(packet.buffer);
