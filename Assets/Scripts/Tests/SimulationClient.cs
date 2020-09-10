@@ -7,10 +7,12 @@ using UnityEngine.AI;
 public class SimulationClient
 {
     private GameObject cube;
+    private GameObject clientPrefab;
     private Channel channel;
     private List<int> sentInputs;
     private List<GameEvent> sentEvents;
     private List<Snapshot> interpolationBuffer;
+    private Dictionary<int, GameObject> players;
     private int lastInputSent;
     private int lastInputRemoved;
     private readonly int minSnapshots;
@@ -20,14 +22,16 @@ public class SimulationClient
     private float timeout;
     private int eventNumber;
     private int id;
-    private bool isPlaying;
+    public bool isPlaying;
     private IPEndPoint serverEndPoint;
     
     public SimulationClient(int portNumber, GameObject cube, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint)
+        IPEndPoint serverEndPoint, GameObject clientPrefab)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
+        players = new Dictionary<int, GameObject>();
+        players[id] = cube;
         sentInputs = new List<int>();
         sentEvents = new List<GameEvent>();
         render = false;
@@ -37,6 +41,7 @@ public class SimulationClient
         this.timeout = timeout;
         this.id = id;
         this.serverEndPoint = serverEndPoint;
+        this.clientPrefab = clientPrefab;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
@@ -45,7 +50,7 @@ public class SimulationClient
     }
     
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint)
+        IPEndPoint serverEndPoint, GameObject clientPrefab)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
@@ -57,6 +62,7 @@ public class SimulationClient
         this.timeout = timeout;
         this.id = id;
         this.serverEndPoint = serverEndPoint;
+        this.clientPrefab = clientPrefab;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
@@ -110,6 +116,13 @@ public class SimulationClient
                             sentEvents.RemoveAt(i);
                         }
                     }
+                }
+                else if (packetType == (int) PacketType.JOIN_GAME)
+                {
+                    int playerId = packet.buffer.GetInt();
+                    CubeEntity playerCube = new CubeEntity(clientPrefab);
+                    playerCube.Deserialize(packet.buffer);
+                    SpawnPlayer(playerId, playerCube);
                 }
 
                 packet.Free();
@@ -222,9 +235,21 @@ public class SimulationClient
                 interpolationBuffer.RemoveAt(0);
             }
 
-            CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(current.cubeEntity, next.cubeEntity,
-                startTime, endTime, clientTime);
-            interpolatedCube.Apply();
+            WorldInfo currentWorldInfo = current.worldInfo;
+            WorldInfo nextWorldInfo = next.worldInfo;
+            foreach (var playerId in currentWorldInfo.players.Keys)
+            {
+                CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
+                if (nextWorldInfo.players.ContainsKey(playerId) && players.ContainsKey(playerId))
+                {
+                    CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
+                    CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity, nextCubeEntity,
+                        startTime, endTime, clientTime, players[playerId]);
+                    interpolatedCube.Apply();
+
+                }
+            }
+            
         }
     }
 
@@ -269,5 +294,13 @@ public class SimulationClient
         Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
         cube = GameObject.Instantiate(clientCube.cubeGameObject, position, rotation) as GameObject;
         isPlaying = true;
+    }
+    
+    public void SpawnPlayer(int playerId, CubeEntity playerCube)
+    {
+        Vector3 position = playerCube.position;
+        Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
+        GameObject player = GameObject.Instantiate(playerCube.cubeGameObject, position, rotation) as GameObject;
+        players[playerId] = player;
     }
 }

@@ -30,7 +30,7 @@ public class SimulationTest : MonoBehaviour
         clients = new Dictionary<int, SimulationClient>();
         sentJoinEvents = new List<JoinEvent>();
         SimulationClient client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend, 
-                                                        timeoutForEvents, 2, serverEndPoint);
+                                                        timeoutForEvents, 2, serverEndPoint, clientPrefab);
         lastClientId = 2;
         clients[lastClientId] = client;
         server = new SimulationServer(serverEndPoint, cubeServer, timeToSend, serverPrefab);
@@ -105,11 +105,21 @@ public class SimulationTest : MonoBehaviour
             int packetType = packet.buffer.GetInt();
             if (packetType == (int) PacketType.JOIN_GAME)
             {
-                CubeEntity clientCube = new CubeEntity(clientPrefab);
-                clientCube.Deserialize(packet.buffer);
-                currentClient.Spawn(clientCube);
+                int clientId = packet.buffer.GetInt();
+                // TODO remove on production
+                if (clientId == 2)
+                {
+                    CubeEntity clientCube = new CubeEntity(clientPrefab);
+                    clientCube.Deserialize(packet.buffer);
+                    currentClient.Spawn(clientCube);
+                }
+//                else
+//                {
+//                    currentClient.isPlaying = true;
+//                }
                 return true;
             }
+            
         }
         return false;
     }
@@ -120,7 +130,7 @@ public class SimulationTest : MonoBehaviour
         int clientId = lastClientId + 1;
         int portNumber = clientId + 9000;
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
-            serverEndPoint);
+            serverEndPoint, clientPrefab);
         clients[clientId] = client;
         lastClientId++;
         SendPlayerJoinEvent(clientId);

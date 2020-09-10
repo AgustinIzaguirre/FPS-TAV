@@ -2,11 +2,16 @@ using System.Collections.Generic;
 
 public class WorldInfo
 {
-    private Dictionary<int, CubeEntity> players;
+    public Dictionary<int, CubeEntity> players;
 
     public WorldInfo()
     {
         players = new Dictionary<int, CubeEntity>();
+    }
+
+    public WorldInfo(Dictionary<int, CubeEntity> players)
+    {
+        this.players = players;
     }
 
     public void addPlayer(int playerId, CubeEntity player)
@@ -24,16 +29,16 @@ public class WorldInfo
         }
     }
 
-    public static Dictionary<int, CubeEntity> Deserialize(BitBuffer buffer)
+    public static WorldInfo Deserialize(BitBuffer buffer)
     {
         int quantity = buffer.GetInt();
         Dictionary<int, CubeEntity> currentPlayers = new Dictionary<int, CubeEntity>();
         for (int i = 0; i < quantity; i++)
         {
             int playerId = buffer.GetInt();
-//            CubeEntity currentPlayer = new CubeEntity();
+            CubeEntity player = CubeEntity.DeserializeInfo(buffer);
+            currentPlayers[playerId] = player;
         }
-
-        return currentPlayers;
+        return new WorldInfo(currentPlayers);
     }
 }

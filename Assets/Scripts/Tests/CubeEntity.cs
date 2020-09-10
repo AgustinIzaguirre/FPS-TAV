@@ -41,6 +41,20 @@ public class CubeEntity
         eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
         eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
     }
+
+    public static CubeEntity DeserializeInfo(BitBuffer buffer)
+    {
+        CubeEntity newCubeEntity = new CubeEntity(null);
+        newCubeEntity.position = new Vector3();
+        newCubeEntity.eulerAngles = new Vector3();
+        newCubeEntity.position.x = FloatSerializer.DeserializeFloat(buffer, -40, 40, 0.001f);
+        newCubeEntity.position.y = buffer.GetFloat();
+        newCubeEntity.position.z = FloatSerializer.DeserializeFloat(buffer, -40, 40, 0.001f);
+        newCubeEntity.eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
+        newCubeEntity.eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
+        newCubeEntity.eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
+        return newCubeEntity;
+    }
     
     public void Apply()
     {
@@ -50,8 +64,8 @@ public class CubeEntity
     }
     
     public static CubeEntity CreateInterpolated(CubeEntity previous, CubeEntity next, float startTime, float endTime,
-        float currentTime) {
-        var cubeEntity = new CubeEntity(previous.cubeGameObject);
+        float currentTime, GameObject cube) {
+        var cubeEntity = new CubeEntity(cube);
         cubeEntity.position += Interpolator.InterpolateVector3(previous.position, next.position, startTime,
             endTime, currentTime);
         cubeEntity.eulerAngles += Interpolator.InterpolateVector3(previous.eulerAngles, next.eulerAngles, 

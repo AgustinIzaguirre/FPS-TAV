@@ -1,0 +1,6 @@
+* Chequear desde el server no mandar ack de algo que ya mande, preguntar
+* Hacer que el cliente cree los objetos clientes cuando recibe el ack de que uno se unio al juego
+* Hacer que el server setie el id de los jugadores
+* Hacer que el server mande la info del mundo a los jugadores.
+* Sacar el cliente hardcodeado
+* Sacar todo lo de cubeEntity de snapshot tanto en cliente, como servidor como en la clase

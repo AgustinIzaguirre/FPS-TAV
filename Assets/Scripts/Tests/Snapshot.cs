@@ -5,6 +5,7 @@ namespace Tests
     public class Snapshot
     {
         public int sequence;
+        public WorldInfo  worldInfo;
         public CubeEntity cubeEntity;
         public Vector3 position;
         public Vector3 rotation;
@@ -13,6 +14,13 @@ namespace Tests
         {
             this.sequence = sequence;
             this.cubeEntity = cubeEntity;
+        }
+        
+        public Snapshot(int sequence, CubeEntity cubeEntity, WorldInfo worldInfo)
+        {
+            this.sequence = sequence;
+            this.cubeEntity = cubeEntity;
+            this.worldInfo = worldInfo;
         }
         
         public Snapshot(CubeEntity cubeEntity)
@@ -25,12 +33,14 @@ namespace Tests
             // TODO replace with enum to diferentiate snapshot from ack
             buffer.PutInt(0);
             buffer.PutInt(sequence);
-            cubeEntity.Serialize(buffer);
+            worldInfo.Serialize(buffer);
+//            cubeEntity.Serialize(buffer);
         }
 
         public void Deserialize(BitBuffer buffer) {
             sequence = buffer.GetInt();
-            cubeEntity.Deserialize(buffer);
+            worldInfo = WorldInfo.Deserialize(buffer);
+//            cubeEntity.Deserialize(buffer);
         }
     }
 }
