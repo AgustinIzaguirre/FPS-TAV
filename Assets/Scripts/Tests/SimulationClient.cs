@@ -19,8 +19,12 @@ public class SimulationClient
     private readonly float timeToSend;
     private float timeout;
     private int eventNumber;
+    private int id;
+    private bool isPlaying;
+    private IPEndPoint serverEndPoint;
     
-    public SimulationClient(int portNumber, GameObject cube, int minSnapshots, float timeToSend, float timeout)
+    public SimulationClient(int portNumber, GameObject cube, int minSnapshots, float timeToSend, float timeout, int id,
+        IPEndPoint serverEndPoint)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
@@ -31,62 +35,86 @@ public class SimulationClient
         this.minSnapshots = minSnapshots;
         this.timeToSend = timeToSend;
         this.timeout = timeout;
+        this.id = id;
+        this.serverEndPoint = serverEndPoint;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
+        isPlaying = true;
         
+    }
+    
+    public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
+        IPEndPoint serverEndPoint)
+    {
+        channel = new Channel(portNumber);
+        interpolationBuffer = new List<Snapshot>();
+        sentInputs = new List<int>();
+        sentEvents = new List<GameEvent>();
+        render = false;
+        this.minSnapshots = minSnapshots;
+        this.timeToSend = timeToSend;
+        this.timeout = timeout;
+        this.id = id;
+        this.serverEndPoint = serverEndPoint;
+        lastInputSent = 1;
+        clientTime = 0f;
+        eventNumber = 0;
+        isPlaying = false;
     }
 
     public void UpdateClient(Channel serverChannel)
     {
-        if (render)
+        if (isPlaying)
         {
-            clientTime += Time.deltaTime;
-        }
-
-        SendInputToServer(serverChannel);
-        CheckForGameEvents(serverChannel);
-        var packet = channel.GetPacket();
-
-        while (packet != null)
-        {
-            int packetType = packet.buffer.GetInt();
-            if (packetType == (int) PacketType.SNAPSHOT)
+            if (render)
             {
-                CubeEntity cubeEntity = new CubeEntity(cube);
-                Snapshot currentSnapshot = new Snapshot(cubeEntity);
-                currentSnapshot.Deserialize(packet.buffer);
-                AddToInterpolationBuffer(currentSnapshot);
-                if (render)
-                {
-                    Interpolate();
-                }
+                clientTime += Time.deltaTime;
             }
-            else if (packetType == (int) PacketType.ACK)
+
+            SendInputToServer(serverChannel);
+            CheckForGameEvents(serverChannel);
+            var packet = channel.GetPacket();
+            while (packet != null)
             {
-                int ackNumber = packet.buffer.GetInt();
-                int quantity = ackNumber - lastInputRemoved;
-                lastInputRemoved = quantity > 0 ? lastInputRemoved + quantity : lastInputRemoved;
-                while (quantity > 0)
+                int packetType = packet.buffer.GetInt();
+                if (packetType == (int) PacketType.SNAPSHOT)
                 {
-                    sentInputs.RemoveAt(0);
-                    quantity -= 1;
-                }
-            }
-            else if (packetType == (int) PacketType.EVENT)
-            {
-                int ackNumber = packet.buffer.GetInt();
-                for (int i = 0; i < sentEvents.Count; i++)
-                {
-                    if (ackNumber == sentEvents[i].eventNumber)
+                    CubeEntity cubeEntity = new CubeEntity(cube);
+                    Snapshot currentSnapshot = new Snapshot(cubeEntity);
+                    currentSnapshot.Deserialize(packet.buffer);
+                    AddToInterpolationBuffer(currentSnapshot);
+                    if (render)
                     {
-                        sentEvents.RemoveAt(i);
+                        Interpolate();
                     }
                 }
-            }
+                else if (packetType == (int) PacketType.ACK)
+                {
+                    int ackNumber = packet.buffer.GetInt();
+                    int quantity = ackNumber - lastInputRemoved;
+                    lastInputRemoved = quantity > 0 ? lastInputRemoved + quantity : lastInputRemoved;
+                    while (quantity > 0)
+                    {
+                        sentInputs.RemoveAt(0);
+                        quantity -= 1;
+                    }
+                }
+                else if (packetType == (int) PacketType.EVENT)
+                {
+                    int ackNumber = packet.buffer.GetInt();
+                    for (int i = 0; i < sentEvents.Count; i++)
+                    {
+                        if (ackNumber == sentEvents[i].eventNumber)
+                        {
+                            sentEvents.RemoveAt(i);
+                        }
+                    }
+                }
 
-            packet.Free();
-            packet = channel.GetPacket();
+                packet.Free();
+                packet = channel.GetPacket();
+            }
         }
     }
 
@@ -117,14 +145,12 @@ public class SimulationClient
         {
             var packet = Packet.Obtain();
             sentInputs.Add(currentInput.value);
-            packet.buffer.PutInt((int) PacketType.INPUT);
+            packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
+            packet.buffer.PutInt(id);
             packet.buffer.PutInt(lastInputRemoved + 1);
             GameInput.Serialize(sentInputs, lastInputSent, packet.buffer);
             packet.buffer.Flush();
-            string serverIP = "127.0.0.1";
-            int port = 9001;
-            var remoteEp = new IPEndPoint(IPAddress.Parse(serverIP), port);
-            serverChannel.Send(packet, remoteEp);
+            serverChannel.Send(packet, serverEndPoint);
             packet.Free();
             lastInputSent += 1;
         }
@@ -144,12 +170,9 @@ public class SimulationClient
     {
         var packet = Packet.Obtain();
         sentEvents.Add(currentEvent);
-        currentEvent.Serialize(packet.buffer);
+        currentEvent.Serialize(packet.buffer, id);
         packet.buffer.Flush();
-        string serverIP = "127.0.0.1";
-        int port = 9001;
-        var remoteEp = new IPEndPoint(IPAddress.Parse(serverIP), port);
-        serverChannel.Send(packet, remoteEp);
+        serverChannel.Send(packet, serverEndPoint);
         packet.Free();
         
     }
@@ -162,6 +185,7 @@ public class SimulationClient
             while (firstEvent != null && clientTime - firstEvent.time >= timeout)
             {
                 sentEvents.RemoveAt(0);
+                eventNumber++;
                 GameEvent newEvent = new GameEvent(firstEvent.name, firstEvent.value, clientTime, eventNumber);
                 SendEventToServer(serverChannel, newEvent);
                 firstEvent = sentEvents.Count > 0 ? sentEvents[0] : null;
@@ -229,9 +253,21 @@ public class SimulationClient
             render = false;
         }
     }
+
+    public Channel GetChannel()
+    {
+        return channel;
+    }
     
     public void DestroyChannel() {
         channel.Disconnect();
     }
 
+    public void Spawn(CubeEntity clientCube)
+    {
+        Vector3 position = clientCube.position;
+        Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
+        cube = GameObject.Instantiate(clientCube.cubeGameObject, position, rotation) as GameObject;
+        isPlaying = true;
+    }
 }

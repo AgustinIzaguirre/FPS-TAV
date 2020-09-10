@@ -1,9 +1,13 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Net;
+using UnityEngine;
 
 public class SimulationTest : MonoBehaviour
 {
     [SerializeField] private GameObject cubeServer;
     [SerializeField] private GameObject cubeClient;
+    [SerializeField] private GameObject serverPrefab;
+    [SerializeField] private GameObject clientPrefab;
 
     private Rigidbody cubeServerRigidBody;
     private int packetsPerSecond = 60;
@@ -11,23 +15,40 @@ public class SimulationTest : MonoBehaviour
     public float timeoutForEvents;
     private float timeToSend;
     private bool connected = true;
-    private SimulationClient client;
+    private Dictionary<int, SimulationClient> clients;
+    private List<JoinEvent> sentJoinEvents;
     private SimulationServer server;
+    private int lastClientId;
+    private float time;
+    private IPEndPoint serverEndPoint;
 
     void Start()
     {
         timeToSend = (float)1 / (float)packetsPerSecond;
         timeoutForEvents = 1f;
-        client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend, timeoutForEvents);
-        server = new SimulationServer(9001, cubeServer, timeToSend);
+        serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9001);
+        clients = new Dictionary<int, SimulationClient>();
+        sentJoinEvents = new List<JoinEvent>();
+        SimulationClient client = new SimulationClient(9000, cubeClient, minSnapshots, timeToSend, 
+                                                        timeoutForEvents, 2, serverEndPoint);
+        lastClientId = 2;
+        clients[lastClientId] = client;
+        server = new SimulationServer(serverEndPoint, cubeServer, timeToSend, serverPrefab);
         Application.targetFrameRate = 60;
+        time = 0f;
     }
 
     private void OnDestroy() {
-        client.DestroyChannel();
+        foreach(var client in clients.Values)
+        {
+            client.DestroyChannel();
+        }
+        server.DestroyChannel();
     }
 
-    void Update() {
+    void Update()
+    {
+        time += Time.deltaTime;
         if (Input.GetKeyDown(KeyCode.D))
         {
             connected = !connected;
@@ -38,6 +59,91 @@ public class SimulationTest : MonoBehaviour
             server.UpdateServer();
         }
 
-        client.UpdateClient(server.GetChannel());
+        CheckIfClientJoined();
+        
+        foreach(var client in clients.Values)
+        {
+            client.UpdateClient(server.GetChannel());
+        }
+    }
+
+    private void CheckIfClientJoined()
+    {
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            SendPlayerJoinEvent();
+        }
+        ReceiveJoinEventResponses();
+        ResendJoinEvents();
+    }
+
+    private void ReceiveJoinEventResponses()
+    {
+        List<int> eventsToRemove = new List<int>();
+        for (int i = 0; i < sentJoinEvents.Count; i++)
+        {
+            int currentClientId = sentJoinEvents[i].clientId;
+            SimulationClient currentClient = clients[currentClientId];
+            if (ReceiveClientJoinResponse(currentClient))
+            {
+                eventsToRemove.Add(i);
+            }
+        }
+
+        for (int i = 0; i < eventsToRemove.Count; i++)
+        {
+            sentJoinEvents.RemoveAt(eventsToRemove[i]);
+        }
+    }
+
+    private bool ReceiveClientJoinResponse(SimulationClient currentClient)
+    {
+        Channel clientChannel = currentClient.GetChannel();
+        var packet = clientChannel.GetPacket();
+        while (packet != null)
+        {
+            int packetType = packet.buffer.GetInt();
+            if (packetType == (int) PacketType.JOIN_GAME)
+            {
+                CubeEntity clientCube = new CubeEntity(clientPrefab);
+                clientCube.Deserialize(packet.buffer);
+                currentClient.Spawn(clientCube);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void SendPlayerJoinEvent()
+    {
+        // Add base player
+        int clientId = lastClientId + 1;
+        int portNumber = clientId + 9000;
+        SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
+            serverEndPoint);
+        clients[clientId] = client;
+        lastClientId++;
+        SendPlayerJoinEvent(clientId);
+    }
+
+    private void ResendJoinEvents()
+    {
+        while (sentJoinEvents.Count > 0 && (time - sentJoinEvents[0].time) > timeoutForEvents)
+        {
+            JoinEvent currentEvent = sentJoinEvents[0];
+            sentJoinEvents.RemoveAt(0);
+            SendPlayerJoinEvent(currentEvent.clientId);
+        }
+    }
+
+    private void SendPlayerJoinEvent(int clientId)
+    {
+        Packet packet = Packet.Obtain();
+        packet.buffer.PutInt((int) PacketType.JOIN_GAME);
+        packet.buffer.PutInt(clientId);
+        packet.buffer.Flush();
+        clients[clientId].GetChannel().Send(packet, serverEndPoint);
+        packet.Free();
+        sentJoinEvents.Add(new JoinEvent(clientId, time));
     }
 }

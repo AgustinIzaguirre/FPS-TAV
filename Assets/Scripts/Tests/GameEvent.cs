@@ -12,9 +12,10 @@ public class GameEvent
         this.eventNumber = eventNumber;
     }
     
-    public void Serialize(BitBuffer buffer)
+    public void Serialize(BitBuffer buffer, int clientId)
     {
         buffer.PutInt((int) PacketType.EVENT);
+        buffer.PutInt(clientId);
         buffer.PutInt(eventNumber);
         buffer.PutInt(value);
         buffer.PutFloat(time);

@@ -6,8 +6,9 @@ using UnityEngine.AI;
 
 public class SimulationServer
 {
-    private GameObject cube;
-    private Rigidbody cubeRigidBody;
+    private GameObject serverPrefab;
+    private Dictionary<int, GameObject> clientsCubes;
+    private Dictionary<int, ClientInfo> clients;
     private Channel channel;
     private float timeToSend;
     private float elapsedTime;
@@ -15,11 +16,15 @@ public class SimulationServer
     private int lastInputApplied;
     private float serverTime;
 
-    public SimulationServer(int portNumber, GameObject cube, float timeToSend)
+    public SimulationServer(IPEndPoint endPoint, GameObject cube, float timeToSend, GameObject serverPrefab)
     {
-        channel = new Channel(portNumber);
-        this.cube = cube;
-        cubeRigidBody = cube.GetComponent<Rigidbody>();
+        channel = new Channel(endPoint.Port);
+        clientsCubes = new Dictionary<int, GameObject>();
+        clients = new Dictionary<int, ClientInfo>();
+        // TODO remove this hardcoded client
+        clients[2] = new ClientInfo(2, new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000));
+        clientsCubes[2] = cube;
+        this.serverPrefab = serverPrefab;
         this.timeToSend = timeToSend;
         sequence = 0;
         elapsedTime = 0f;
@@ -31,26 +36,34 @@ public class SimulationServer
     {
         elapsedTime += Time.deltaTime;
         serverTime += Time.deltaTime;
-        ReceiveInputs();
+        ReceivePackets();
         if (elapsedTime >= timeToSend)
         {
-            //serialize
-            var packet = Packet.Obtain();
-            sequence++;
-            CubeEntity cubeEntity = new CubeEntity(cube);
-            Snapshot currentSnapshot = new Snapshot(sequence, cubeEntity);
-            currentSnapshot.Serialize(packet.buffer);
-            packet.buffer.Flush();
-            string clientIP = "127.0.0.1";
-            int port = 9000;
-            var remoteEp = new IPEndPoint(IPAddress.Parse(clientIP), port);
-            channel.Send(packet, remoteEp);
-            packet.Free();
+            UpdateClients();
             elapsedTime -= timeToSend;
         }
     }
 
-    private void ReceiveInputs()
+     public void UpdateClients()
+     {
+         foreach (var clientId in clients.Keys)
+         {
+             //serialize
+             if (clientId == 2) // TODO remove if on production
+             {
+                 var packet = Packet.Obtain();
+                 sequence++;
+                 CubeEntity cubeEntity = new CubeEntity(clientsCubes[clientId]);
+                 Snapshot currentSnapshot = new Snapshot(sequence, cubeEntity);
+                 currentSnapshot.Serialize(packet.buffer);
+                 packet.buffer.Flush();
+                 channel.Send(packet, clients[clientId].endPoint);
+                 packet.Free();
+             }
+         }   
+     }
+
+    private void ReceivePackets()
     {
         var packet = channel.GetPacket();
 
@@ -59,19 +72,29 @@ public class SimulationServer
             int packetType = packet.buffer.GetInt();
             if (packetType == (int) PacketType.INPUT)
             {
+                int clientId = packet.buffer.GetInt();
+                ClientInfo currentClient = clients[clientId];
                 int startInput = packet.buffer.GetInt();
                 List<int> inputsToExecute = GameInput.Deserialize(packet.buffer);
                 int ackNumber = packet.buffer.GetInt();
-                SendAck(ackNumber, PacketType.ACK);
-                ApplyInputs(startInput, inputsToExecute);
-                lastInputApplied = ackNumber;
+                SendAck(ackNumber, PacketType.ACK, currentClient.endPoint);
+                ApplyInputs(clientId, startInput, inputsToExecute);
+                currentClient.lastInputApplied = ackNumber;
             }
-            else if(packetType ==(int) PacketType.EVENT)
+            else if (packetType == (int) PacketType.EVENT)
             {
                  // handle event   
+                 int clientId = packet.buffer.GetInt();
+                 ClientInfo currentClient = clients[clientId];
                  GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
-                 Debug.Log("Event received: " + currentEvent.eventNumber);
-                 SendAck(currentEvent.eventNumber, PacketType.EVENT);
+                 SendAck(currentEvent.eventNumber, PacketType.EVENT, currentClient.endPoint);
+            }
+            else if (packetType == (int) PacketType.JOIN_GAME)
+            {
+                int clientId = packet.buffer.GetInt();
+                var clientEndPoint = packet.fromEndPoint;
+                SendJoinEventResponse(clientId, clientEndPoint);
+                clients[clientId] = new ClientInfo(clientId, clientEndPoint);
             }
             packet.Free();
             packet = channel.GetPacket();
@@ -79,27 +102,44 @@ public class SimulationServer
         }
     }
 
-    private void SendAck(int ackNumber, PacketType packetType)
+    private void SendJoinEventResponse(int clientId, IPEndPoint clientEndpoint)
+    {
+        float xPosition = Random.Range(-4f, 4f);
+        float yPosition = 1f;
+        float zPosition = Random.Range(-4f, 4f);
+        Vector3 position = new Vector3(xPosition, yPosition, zPosition);
+        Quaternion rotation = Quaternion.Euler(Vector3.zero);
+        GameObject newCube = GameObject.Instantiate(serverPrefab, position, rotation);
+        clientsCubes[clientId] = newCube;
+        CubeEntity newClient = new CubeEntity(newCube, position, rotation.eulerAngles);
+        var packet = Packet.Obtain();
+        packet.buffer.PutInt((int) PacketType.JOIN_GAME);
+        newClient.Serialize(packet.buffer);
+        packet.buffer.Flush();
+//        Debug.Log("sending response to port = " + clientEndpoint.Port.ToString());
+        channel.Send(packet, clientEndpoint);
+    }
+
+    private void SendAck(int ackNumber, PacketType packetType, IPEndPoint endPoint)
     {
         var packet = Packet.Obtain();
         packet.buffer.PutInt((int) packetType);
         packet.buffer.PutInt(ackNumber);
         packet.buffer.Flush();
-        string serverIP = "127.0.0.1";
-        int port = 9000;
-        var remoteEp = new IPEndPoint(IPAddress.Parse(serverIP), port);
-        channel.Send(packet, remoteEp);
+        channel.Send(packet, endPoint);
         packet.Free();
     }
 
-    private void ApplyInputs(int startInput, List<int> inputsToExecute)
+    private void ApplyInputs(int clientId, int startInput, List<int> inputsToExecute)
     {
+//        Debug.Log("input from clientId = " + clientId);
+
         for (int i = 0; i < inputsToExecute.Count; i++)
         {
-            if (lastInputApplied < startInput + i)
+            if (clients[clientId].lastInputApplied < startInput + i)
             {
                 Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
-                MoveCubeWithForce(appliedForce);
+                MoveCubeWithForce(clientId, appliedForce);
             }
         }
     }
@@ -124,9 +164,10 @@ public class SimulationServer
         return appliedForce;
     }
 
-    private void MoveCubeWithForce(Vector3 appliedForce)
+    private void MoveCubeWithForce(int clientId, Vector3 appliedForce)
     {
-        cubeRigidBody.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
+        Rigidbody clientRigidBody = clientsCubes[clientId].GetComponent<Rigidbody>();
+        clientRigidBody.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
     }
     
 
