@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Net;
 using Tests;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -21,7 +22,8 @@ public class SimulationClient
     private readonly float timeToSend;
     private float timeout;
     private int eventNumber;
-    private int id;
+    public int id;
+    public bool isSpawned;
     public bool isPlaying;
     private IPEndPoint serverEndPoint;
 
@@ -43,24 +45,31 @@ public class SimulationClient
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
+        isSpawned = false;
         isPlaying = false;
     }
 
     public void UpdateClient(Channel serverChannel)
     {
+        
+        if (render)
+        {
+            clientTime += Time.deltaTime;
+        }
+
         if (isPlaying)
         {
-            if (render)
-            {
-                clientTime += Time.deltaTime;
-            }
-
+//            Debug.Log("Sending input for clientId = " + id + " at time = " + clientTime);
             SendInputToServer(serverChannel);
             CheckForGameEvents(serverChannel);
-            var packet = channel.GetPacket();
-            while (packet != null)
+        }
+
+        var packet = channel.GetPacket();
+        while (packet != null)
+        {
+            int packetType = packet.buffer.GetInt();
+            if (isPlaying)
             {
-                int packetType = packet.buffer.GetInt();
                 if (packetType == (int) PacketType.SNAPSHOT)
                 {
                     CubeEntity cubeEntity = new CubeEntity(players[id]);
@@ -94,18 +103,63 @@ public class SimulationClient
                         }
                     }
                 }
-                else if (packetType == (int) PacketType.JOIN_GAME)
-                {
-                    int playerId = packet.buffer.GetInt();
-                    CubeEntity playerCube = new CubeEntity(clientPrefab);
-                    playerCube.Deserialize(packet.buffer);
-                    SpawnPlayer(playerId, playerCube);
-                }
-
-                packet.Free();
-                packet = channel.GetPacket();
             }
-        }
+            if (packetType == (int) PacketType.NEW_PLAYER)
+            {
+//                TODO check if already has player
+                NewPlayerEvent newPlayerEvent = NewPlayerEvent.Deserialize(packet.buffer);
+                int playerId = newPlayerEvent.playerId;
+                if (!players.ContainsKey(playerId))
+                {
+                    if (id == 1)
+                    {
+                        if (id == playerId)
+                        {
+                            Debug.Log("Spawning own with id = " + playerId);
+                            Spawn(newPlayerEvent.newPlayer);
+                        }
+                        else
+                        {
+                            Debug.Log("Spawning player with id = " + playerId);
+                            SpawnPlayer(playerId, newPlayerEvent.newPlayer);
+                        }
+                    }
+                }
+                SendAck((int) PacketType.NEW_PLAYER, playerId, serverChannel);
+            }
+            if (packetType == (int) PacketType.START_INFO)
+            {
+                if (isSpawned)
+                {
+                    WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
+                    foreach (var playerId in worldInfo.players.Keys)
+                    {
+                        if (playerId != id && !players.ContainsKey(playerId))
+                        {
+                            
+                            Debug.Log("Spawning player with id = " + playerId);
+                            SpawnPlayer(playerId, worldInfo.players[playerId]);
+                        }
+                    }
+                    isPlaying = true;
+                    SendAck((int) PacketType.START_INFO, id, serverChannel);
+                }
+            }
+
+            packet.Free();
+            packet = channel.GetPacket();
+        } 
+    }
+
+    private void SendAck(int packetType, int playerId, Channel serverChannel)
+    {
+        var packet = Packet.Obtain();
+        packet.buffer.PutInt(packetType);
+        packet.buffer.PutInt(id);
+        packet.buffer.PutInt(playerId);
+        packet.buffer.Flush();
+        serverChannel.Send(packet, serverEndPoint);
+        packet.Free();    
     }
 
     private GameInput GetUserInput()
@@ -270,17 +324,18 @@ public class SimulationClient
 
     public void Spawn(CubeEntity clientCube)
     {
-        Vector3 position = clientCube.position;
-        Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
-        players[id] = Object.Instantiate(clientCube.cubeGameObject, position, rotation) as GameObject;
-        isPlaying = true;
+            Debug.Log("Spawning own2 clientId = " + id);
+            Vector3 position = clientCube.position;
+            Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
+            players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
+            isSpawned = true;
     }
     
     public void SpawnPlayer(int playerId, CubeEntity playerCube)
     {
         Vector3 position = playerCube.position;
         Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
-        GameObject player = GameObject.Instantiate(playerCube.cubeGameObject, position, rotation) as GameObject;
+        GameObject player = GameObject.Instantiate(clientPrefab, position, rotation) as GameObject;
         players[playerId] = player;
     }
 }

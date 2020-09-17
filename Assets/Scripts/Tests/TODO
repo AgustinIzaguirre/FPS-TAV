@@ -1,6 +1,9 @@
 * Chequear desde el server no mandar ack de algo que ya mande, preguntar
 * Hacer que el cliente cree los objetos clientes cuando recibe el ack de que uno se unio al juego
 * Hacer que el server setie el id de los jugadores
-* Hacer que el server mande la info del mundo a los jugadores.
-* Sacar el cliente hardcodeado
+* Hacer que el server mande la info del mundo a los jugadores. // Done
+* Sacar el cliente hardcodeado  // Done
 * Sacar todo lo de cubeEntity de snapshot tanto en cliente, como servidor como en la clase
+* Hacer el flujo joinevent, server manda ack solo a ese con el id. Server manda a todos los mensajes de se unio tal jugador esperando el ack de respuesta.
+nuevo player manda request del estado del juego, server manda world info
+* Comprimir la cantidad de jugadores y el tipo de paquetegi

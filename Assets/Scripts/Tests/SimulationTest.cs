@@ -24,10 +24,10 @@ public class SimulationTest : MonoBehaviour
     {
         timeToSend = (float)1 / (float)packetsPerSecond;
         timeoutForEvents = 1f;
-        serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9001);
+        serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
         clients = new Dictionary<int, SimulationClient>();
         sentJoinEvents = new List<JoinEvent>();
-        lastClientId = 2;
+        lastClientId = 0;
         server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
         Application.targetFrameRate = 60;
         time = 0f;
@@ -103,11 +103,12 @@ public class SimulationTest : MonoBehaviour
             {
                 int clientId = packet.buffer.GetInt();
                 // TODO remove on production
-                if (clientId == 3)
+                if (clientId == 1)
                 {
+                    currentClient.id = clientId;
                     CubeEntity clientCube = new CubeEntity(clientPrefab);
-                    clientCube.Deserialize(packet.buffer);
-                    currentClient.Spawn(clientCube);
+//                    clientCube.Deserialize(packet.buffer);
+//                    currentClient.Spawn(clientCube);
                 }
 //                else
 //                {
