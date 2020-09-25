@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class CubeEntity
 {
@@ -71,5 +72,28 @@ public class CubeEntity
         cubeEntity.eulerAngles += Interpolator.InterpolateVector3(previous.eulerAngles, next.eulerAngles, 
             startTime, endTime, currentTime);
         return cubeEntity;
+    }
+
+    public bool IsEqual(CubeEntity other, float positionThreshold, float rotationThreshold)
+    {
+        Vector3 position = cubeGameObject.transform.position;
+        Vector3 rotation = cubeGameObject.transform.eulerAngles;
+        Vector3 otherPosition = other.cubeGameObject.transform.position;
+        Vector3 otherRotation = other.cubeGameObject.transform.eulerAngles;
+        if (Math.Abs(position.x - otherPosition.x) > positionThreshold ||
+            Math.Abs(position.y - otherPosition.y) > positionThreshold ||
+            Math.Abs(position.z - otherPosition.z) > positionThreshold)
+        {
+            return false;
+        }
+
+        if (Math.Abs(rotation.x - otherRotation.x) > rotationThreshold ||
+            Math.Abs(rotation.y - otherRotation.y) > rotationThreshold ||
+            Math.Abs(rotation.z - otherRotation.z) > rotationThreshold)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

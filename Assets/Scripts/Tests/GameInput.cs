@@ -5,7 +5,7 @@ public class GameInput
     public int value;
     private static readonly int minValue = 0;
     private static readonly int maxValue = 1 << 2;
-    public GameInput(bool jump, bool moveLeft, bool moveRight) 
+    public GameInput(bool jump, bool moveLeft, bool moveRight)
     {
         int currentInput = 0;
         if (jump)

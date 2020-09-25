@@ -7,15 +7,19 @@ using UnityEngine.AI;
 
 public class SimulationClient
 {
-    private GameObject cube;
+//    private GameObject cube;
     private GameObject clientPrefab;
     private Channel channel;
     private List<int> sentInputs;
+    private List<int> appliedInputs;
     private List<GameEvent> sentEvents;
     private List<Snapshot> interpolationBuffer;
     private Dictionary<int, GameObject> players;
+    private GameObject playerPrediction;
     private int lastInputSent;
     private int lastInputRemoved;
+    private int lastClientInput;
+    private int lastServerInput;
     private readonly int minSnapshots;
     private bool render;
     private float clientTime;
@@ -34,6 +38,7 @@ public class SimulationClient
         interpolationBuffer = new List<Snapshot>();
         players = new Dictionary<int, GameObject>();
         sentInputs = new List<int>();
+        appliedInputs = new List<int>();
         sentEvents = new List<GameEvent>();
         render = false;
         this.minSnapshots = minSnapshots;
@@ -47,6 +52,8 @@ public class SimulationClient
         eventNumber = 0;
         isSpawned = false;
         isPlaying = false;
+        lastClientInput = 0;
+        lastServerInput = 0;
     }
 
     public void UpdateClient(Channel serverChannel)
@@ -75,10 +82,25 @@ public class SimulationClient
                     CubeEntity cubeEntity = new CubeEntity(players[id]);
                     Snapshot currentSnapshot = new Snapshot(cubeEntity);
                     currentSnapshot.Deserialize(packet.buffer);
+                    int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
                     AddToInterpolationBuffer(currentSnapshot);
                     if (render)
                     {
                         Interpolate();
+
+                        CalculatePrediction(currentSnapshot.worldInfo.players[id]);
+                        CubeEntity predictionEntity = new CubeEntity(playerPrediction);
+                        CubeEntity playerEntity = new CubeEntity(players[id]);
+                        // TODO remove from serverInput to lastInput
+                        RemoveFromList(lastServerInput, lastInput, appliedInputs);
+                        lastServerInput = lastInput;
+                        if (!predictionEntity.IsEqual(playerEntity, 0.2f, 5))
+                        {
+                            Debug.Log("Not equals");
+                            players[id].transform.position = playerPrediction.transform.position;
+                            players[id].transform.rotation = playerPrediction.transform.rotation;
+                        }
+                    
                     }
                 }
                 else if (packetType == (int) PacketType.ACK)
@@ -115,12 +137,12 @@ public class SimulationClient
                     {
                         if (id == playerId)
                         {
-                            Debug.Log("Spawning own with id = " + playerId);
+//                            Debug.Log("Spawning own with id = " + playerId);
                             Spawn(newPlayerEvent.newPlayer);
                         }
                         else
                         {
-                            Debug.Log("Spawning player with id = " + playerId);
+//                            Debug.Log("Spawning player with id = " + playerId);
                             SpawnPlayer(playerId, newPlayerEvent.newPlayer);
                         }
                     }
@@ -137,7 +159,7 @@ public class SimulationClient
                         if (playerId != id && !players.ContainsKey(playerId))
                         {
                             
-                            Debug.Log("Spawning player with id = " + playerId);
+//                            Debug.Log("Spawning player with id = " + playerId);
                             SpawnPlayer(playerId, worldInfo.players[playerId]);
                         }
                     }
@@ -149,6 +171,28 @@ public class SimulationClient
             packet.Free();
             packet = channel.GetPacket();
         } 
+    }
+
+    private void RemoveFromList(int start, int end, List<int> list)
+    {
+        int size = list.Count;
+        for (int i = 0; i < size && i <= end - start; i++)
+        {
+            list.RemoveAt(0);
+        }
+    }
+
+    private void CalculatePrediction(CubeEntity serverPlayer)
+    {
+        playerPrediction.transform.position = serverPlayer.position;
+        playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
+        Rigidbody predictionRigidBody = playerPrediction.GetComponent<Rigidbody>();
+//        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
+        int quantity = lastClientInput - lastServerInput;
+        for (int i = 0; i < appliedInputs.Count && i <= lastClientInput; i++)
+        {
+          PlayerMotion.ApplyInput(appliedInputs[i], predictionRigidBody);  
+        }
     }
 
     private void SendAck(int packetType, int playerId, Channel serverChannel)
@@ -189,6 +233,9 @@ public class SimulationClient
         {
             var packet = Packet.Obtain();
             sentInputs.Add(currentInput.value);
+            appliedInputs.Add(currentInput.value);
+            PlayerMotion.ApplyInput(currentInput.value, players[id].GetComponent<Rigidbody>());
+            lastClientInput += 1;
             packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
             packet.buffer.PutInt(id);
             packet.buffer.PutInt(lastInputRemoved + 1);
@@ -271,16 +318,21 @@ public class SimulationClient
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    if (currentWorldInfo.players.ContainsKey(playerId) && nextWorldInfo.players.ContainsKey(playerId) &&
-                        players.ContainsKey(playerId))
+                    
+                    if (playerId != id)
                     {
-                        CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
+                        if (currentWorldInfo.players.ContainsKey(playerId) &&
+                            nextWorldInfo.players.ContainsKey(playerId) &&
+                            players.ContainsKey(playerId))
+                        {
+                            CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
 
-                        CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
-                        CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity, nextCubeEntity,
-                            startTime, endTime, clientTime, players[playerId]);
-                        interpolatedCube.Apply();
-
+                            CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
+                            CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity,
+                                nextCubeEntity,
+                                startTime, endTime, clientTime, players[playerId]);
+                            interpolatedCube.Apply();
+                        }
                     }
                 }
             }
@@ -324,11 +376,13 @@ public class SimulationClient
 
     public void Spawn(CubeEntity clientCube)
     {
-            Debug.Log("Spawning own2 clientId = " + id);
+//            Debug.Log("Spawning own2 clientId = " + id);
             Vector3 position = clientCube.position;
             Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
             players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
             isSpawned = true;
+            playerPrediction = GameObject.Instantiate(clientPrefab, position, rotation) as GameObject;
+            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
     }
     
     public void SpawnPlayer(int playerId, CubeEntity playerCube)

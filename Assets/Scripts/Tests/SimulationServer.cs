@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using Tests;
 using UnityEngine;
 using UnityEngine.AI;
+using Debug = UnityEngine.Debug;
 
 public class SimulationServer
 {
@@ -10,6 +12,7 @@ public class SimulationServer
     private Dictionary<int, GameObject> clientsCubes;
     private Dictionary<int, ClientInfo> clients;
     private Dictionary<int, bool> activePlayers;
+    private Dictionary<int, int> playerInputsApplied;
     private Channel channel;
     private float timeToSend;
     private float elapsedTime;
@@ -27,6 +30,7 @@ public class SimulationServer
         clientsCubes = new Dictionary<int, GameObject>();
         clients = new Dictionary<int, ClientInfo>();
         activePlayers = new Dictionary<int, bool>();
+        playerInputsApplied = new Dictionary<int, int>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
         this.serverPrefab = serverPrefab;
@@ -58,7 +62,7 @@ public class SimulationServer
          {
              NewPlayerEvent currentEvent = newPlayerEventSent[0];
              int destinationId = currentEvent.destinationId;
-             Debug.Log("Resending to clientId =" + destinationId);
+//             Debug.Log("Resending to clientId =" + destinationId);
              int playerId = currentEvent.playerId;
              SendNewPlayerEvent(playerId, currentEvent.newPlayer, destinationId);
              newPlayerEventSent.RemoveAt(0);
@@ -67,7 +71,7 @@ public class SimulationServer
          
          while (startInfoSent.Count > 0 && (serverTime - startInfoSent[0].time) >= eventTimeOut)
          {
-             Debug.Log("Resending startInfo");
+//             Debug.Log("Resending startInfo");
 
              StartInfoEvent currentEvent = startInfoSent[0];
              int destinationId = currentEvent.clientId;
@@ -100,7 +104,7 @@ public class SimulationServer
          foreach (var clientId in clientsCubes.Keys)
          {
              CubeEntity clientEntity = new CubeEntity(clientsCubes[clientId]);
-             currentWorldInfo.addPlayer(clientId, clientEntity);
+             currentWorldInfo.AddPlayer(clientId, clientEntity, clients[clientId].lastInputApplied);
          }
 
          return currentWorldInfo;
@@ -147,7 +151,7 @@ public class SimulationServer
                 if (!clients.ContainsKey(clientId))
                 {
                     clients[clientId] = new ClientInfo(clientId, clientEndPoint);
-                    Debug.Log("clients.Count = " + clients.Count);
+//                    Debug.Log("clients.Count = " + clients.Count);
                     SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
                     GenerateNewPlayer(clientId);
                     activePlayers[clientId] = false;
@@ -169,9 +173,9 @@ public class SimulationServer
                 newPlayerEventSent.RemoveAt(removeIndex);
                 if (clientId == playerId && !activePlayers[clientId])
                 {
-                    Debug.Log("sending start info");
+//                    Debug.Log("sending start info");
                     SendStartInfo(clientId);
-                    // sendNewWorldInfo and wait ack then activate player
+                    // sendNewWorldInfo and wait ack then activate player TODO remove i think
                 }
             }
             else if (packetType == (int) PacketType.START_INFO)
@@ -212,7 +216,7 @@ public class SimulationServer
         CubeEntity newPlayer = new CubeEntity(clientsCubes[playerId], position, rotation);
         foreach (var id in clients.Keys)
         {
-            Debug.Log("Sending event to playerId = " + id);
+//            Debug.Log("Sending event to playerId = " + id);
             SendNewPlayerEvent(playerId, newPlayer, id);
         }
      }
@@ -254,42 +258,10 @@ public class SimulationServer
 
     private void ApplyInputs(int clientId, int startInput, List<int> inputsToExecute)
     {
-        for (int i = 0; i < inputsToExecute.Count; i++)
-        {
-            if (clients[clientId].lastInputApplied < startInput + i)
-            {
-                Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
-                MoveCubeWithForce(clientId, appliedForce);
-            }
-        }
+        PlayerMotion.ApplyInputs(startInput, inputsToExecute, clients[clientId].lastInputApplied,
+            clientsCubes[clientId].GetComponent<Rigidbody>());
     }
 
-    private Vector3 AnalyzeInput(int inputs)
-    {
-        Vector3 appliedForce = Vector3.zero;
-        ;
-        if ((inputs & 1) > 0)
-        {
-            appliedForce += Vector3.up * 5;
-        } 
-        if ((inputs & (1 << 1)) > 0)
-        {
-            appliedForce += Vector3.left * 5;
-        }
-        if ((inputs & (1 << 2)) > 0)
-        {
-            appliedForce += Vector3.right * 5;
-        }
-
-        return appliedForce;
-    }
-
-    private void MoveCubeWithForce(int clientId, Vector3 appliedForce)
-    {
-        Rigidbody clientRigidBody = clientsCubes[clientId].GetComponent<Rigidbody>();
-        clientRigidBody.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
-    }
-    
 
     public Channel GetChannel()
     {
