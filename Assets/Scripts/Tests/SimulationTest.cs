@@ -116,7 +116,8 @@ public class SimulationTest : MonoBehaviour
 //                }
                 return true;
             }
-            
+            packet.Free();
+            packet = clientChannel.GetPacket();
         }
         return false;
     }

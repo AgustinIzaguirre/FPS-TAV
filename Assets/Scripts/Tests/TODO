@@ -1,15 +1,19 @@
 * Chequear desde el server no mandar ack de algo que ya mande, preguntar
-* Hacer que el cliente cree los objetos clientes cuando recibe el ack de que uno se unio al juego
+* Hacer que el cliente cree los objetos clientes cuando recibe el ack de que uno se unio al juego //DONE
 * Hacer que el server setie el id de los jugadores // Done
 * Hacer que el server mande la info del mundo a los jugadores. // Done
 * Sacar el cliente hardcodeado  // Done
-* Sacar todo lo de cubeEntity de snapshot tanto en cliente, como servidor como en la clase
+* Sacar todo lo de cubeEntity de snapshot tanto en cliente, como servidor como en la clase //DONE
 * Hacer el flujo joinevent, server manda ack solo a ese con el id. Server manda a todos los mensajes de se unio tal jugador esperando el ack de respuesta.
 nuevo player manda request del estado del juego, server manda world info // Done
 * Comprimir la cantidad de jugadores y el tipo de paquete
-* Hacer que el cliente actual no hace interpolacion sino que guarda los inputs y ejecuta desde el ultimo que recibio.
-* Si la info no coincide con el servidor, para mi caso voy a hacer que se transporte a la del servidor.
-* Probar hacer el free de los paquetes cuando amndo tambien a ver si sigue andando.
+* Hacer que el cliente actual no hace interpolacion sino que guarda los inputs y ejecuta desde el ultimo que recibio. //DONE
+* Si la info no coincide con el servidor, para mi caso voy a hacer que se transporte a la del servidor. //DONE
+* Probar hacer el free de los paquetes cuando amndo tambien a ver si sigue andando. //DONE
 * Pasar a character controller
 * Preguntar lo de fixed update y lo de mandar input en cada uno.
 * Probar los build de server y cliente
+* Probar si el servidor aplica los inputs mas de una vez si le llegan repetidos. //DONE
+* Refactorear los inputs para que se identifiquen y si me llegan viejos no los aplique constantemente. //Done
+* Cambiar el apply inputs de simulation client para que aplique las lista si es que hace falta, pero creo que no porque aplica de a uno.
+* Hacer lo de fixed update

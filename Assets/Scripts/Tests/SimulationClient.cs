@@ -7,7 +7,6 @@ using UnityEngine.AI;
 
 public class SimulationClient
 {
-//    private GameObject cube;
     private GameObject clientPrefab;
     private Channel channel;
     private List<int> sentInputs;
@@ -79,8 +78,7 @@ public class SimulationClient
             {
                 if (packetType == (int) PacketType.SNAPSHOT)
                 {
-                    CubeEntity cubeEntity = new CubeEntity(players[id]);
-                    Snapshot currentSnapshot = new Snapshot(cubeEntity);
+                    Snapshot currentSnapshot = new Snapshot();
                     currentSnapshot.Deserialize(packet.buffer);
                     int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
                     AddToInterpolationBuffer(currentSnapshot);
@@ -189,7 +187,7 @@ public class SimulationClient
         Rigidbody predictionRigidBody = playerPrediction.GetComponent<Rigidbody>();
 //        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
         int quantity = lastClientInput - lastServerInput;
-        for (int i = 0; i < appliedInputs.Count && i <= lastClientInput; i++)
+        for (int i = 0; i < appliedInputs.Count && i <= quantity; i++)
         {
           PlayerMotion.ApplyInput(appliedInputs[i], predictionRigidBody);  
         }

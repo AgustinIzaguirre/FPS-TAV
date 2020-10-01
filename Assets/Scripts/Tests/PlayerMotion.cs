@@ -23,16 +23,13 @@ public class PlayerMotion
 
         return appliedForce;
     }
-    
-    public static void ApplyInputs(int startInput, List<int> inputsToExecute, int lastInputApplied, Rigidbody player)
+
+    public static void ApplyInputs(int startInput, List<int> inputsToExecute, Rigidbody player)
     {
-        for (int i = 0; i < inputsToExecute.Count; i++)
+        for (int i = startInput; i < inputsToExecute.Count; i++)
         {
-            if (lastInputApplied < startInput + i)
-            {
-                Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
-                player.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
-            }
+            Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
+            player.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
         }
     }
     

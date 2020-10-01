@@ -17,7 +17,6 @@ public class SimulationServer
     private float timeToSend;
     private float elapsedTime;
     private int sequence;
-    private int lastInputApplied;
     private float serverTime;
     private int lastClientId;
     private float eventTimeOut;
@@ -37,7 +36,6 @@ public class SimulationServer
         this.timeToSend = timeToSend;
         sequence = 0;
         elapsedTime = 0f;
-        lastInputApplied = 0;
         serverTime = 0f;
         lastClientId = 0;
         eventTimeOut = 1f;
@@ -89,8 +87,7 @@ public class SimulationServer
              //serialize
              var packet = Packet.Obtain();
              sequence++;
-             CubeEntity cubeEntity = new CubeEntity(clientsCubes[clientId]);
-             Snapshot currentSnapshot = new Snapshot(sequence, cubeEntity, currentWorldInfo);
+             Snapshot currentSnapshot = new Snapshot(sequence, currentWorldInfo);
              currentSnapshot.Serialize(packet.buffer);
              packet.buffer.Flush();
              channel.Send(packet, clients[clientId].endPoint);
@@ -127,7 +124,9 @@ public class SimulationServer
                     List<int> inputsToExecute = GameInput.Deserialize(packet.buffer);
                     int ackNumber = packet.buffer.GetInt();
                     SendAck(ackNumber, PacketType.ACK, currentClient.endPoint);
-                    ApplyInputs(clientId, startInput, inputsToExecute);
+                    int firstInput = currentClient.lastInputApplied + 1 - startInput;
+                    PlayerMotion.ApplyInputs(firstInput, inputsToExecute,
+                        clientsCubes[clientId].GetComponent<Rigidbody>());
                     currentClient.lastInputApplied = ackNumber;
                 }
             }
@@ -209,6 +208,7 @@ public class SimulationServer
          packet.buffer.Flush();
          channel.Send(packet, clientEndpoint);
          startInfoSent.Add(newPlayerEvent);
+         packet.Free(); //TODO check if remove
      }
 
      private void SendNewPlayerEventToAllPlayers(int playerId, Vector3 position, Vector3 rotation)
@@ -232,6 +232,7 @@ public class SimulationServer
          packet.buffer.Flush();
          channel.Send(packet, clientEndpoint);
          newPlayerEventSent.Add(newPlayerEvent);
+         packet.Free();  // TODO check if remove
      }
 
      private void GenerateNewPlayer(int clientId)
@@ -256,14 +257,7 @@ public class SimulationServer
         packet.Free();
     }
 
-    private void ApplyInputs(int clientId, int startInput, List<int> inputsToExecute)
-    {
-        PlayerMotion.ApplyInputs(startInput, inputsToExecute, clients[clientId].lastInputApplied,
-            clientsCubes[clientId].GetComponent<Rigidbody>());
-    }
-
-
-    public Channel GetChannel()
+     public Channel GetChannel()
     {
         return channel;
     }
