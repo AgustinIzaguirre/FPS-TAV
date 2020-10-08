@@ -4,21 +4,29 @@ public class GameInput
 {
     public int value;
     private static readonly int minValue = 0;
-    private static readonly int maxValue = 1 << 2;
-    public GameInput(bool jump, bool moveLeft, bool moveRight)
+    private static readonly int maxValue = 1 << 4;
+    public GameInput(bool jump, bool moveLeft, bool moveRight, bool moveForward, bool moveBackward)
     {
         int currentInput = 0;
         if (jump)
         {
-            currentInput = (currentInput | 1);
+            currentInput = (currentInput | (int) InputType.JUMP);
         }
         if (moveLeft)
         {
-            currentInput = (currentInput | (1 << 1));
+            currentInput = (currentInput | (int) InputType.LEFT);
         }
         if (moveRight)
         {
-            currentInput = (currentInput | (1 << 2));
+            currentInput = (currentInput | (int) InputType.RIGHT);
+        }
+        if (moveForward)
+        {
+            currentInput = (currentInput | (int) InputType.FORWARD);
+        }
+        if (moveBackward)
+        {
+            currentInput = (currentInput | (int) InputType.BACKWARD);
         }
         value = currentInput;
     }

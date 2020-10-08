@@ -3,23 +3,31 @@ using UnityEngine;
 
 public class PlayerMotion
 {
-    private static float playerSpeed = 2f;
+    private static float playerSpeed = 10f;
     
     private static Vector3 AnalyzeInput(int inputs)
     {
         Vector3 appliedForce = Vector3.zero;
         ;
-        if ((inputs & 1) > 0)
+        if ((inputs & ((int) InputType.JUMP)) > 0)
         {
-            appliedForce += Vector3.up * 5;
+            appliedForce += Vector3.up;
         } 
-        if ((inputs & (1 << 1)) > 0)
+        if ((inputs & ((int) InputType.LEFT)) > 0)
         {
-            appliedForce += Vector3.left * 5;
+            appliedForce += Vector3.left;
         }
-        if ((inputs & (1 << 2)) > 0)
+        if ((inputs & ((int) InputType.RIGHT)) > 0)
         {
-            appliedForce += Vector3.right * 5;
+            appliedForce += Vector3.right;
+        }
+        if ((inputs & ((int) InputType.FORWARD)) > 0)
+        {
+            appliedForce += Vector3.forward;
+        }
+        if ((inputs & ((int) InputType.BACKWARD)) > 0)
+        {
+            appliedForce += Vector3.back;
         }
 
         return appliedForce;

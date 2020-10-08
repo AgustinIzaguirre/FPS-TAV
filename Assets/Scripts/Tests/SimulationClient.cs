@@ -215,7 +215,7 @@ public class SimulationClient
 
     private GameInput GetUserInput()
     {
-        bool jump = false, moveLeft = false, moveRight = false;
+        bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             moveLeft = true;
@@ -224,13 +224,21 @@ public class SimulationClient
         {
             moveRight = true;
         }
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            moveForward = true;
+        }
+        if (Input.GetKey(KeyCode.DownArrow))
+        {
+            moveBackward = true;
+        }
 
-        return new GameInput(jump, moveLeft, moveRight);
+        return new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward);
     }
 
     private void GetUserActionInput()
     {
-        bool jump = false, moveLeft = false, moveRight = false;
+        bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
         if (Input.GetKeyDown(KeyCode.Space))
         {
             jump = true;
@@ -238,7 +246,7 @@ public class SimulationClient
 
         if (jump)
         {
-            inputsToExecute.Add(new GameInput(jump, moveLeft, moveRight));
+            inputsToExecute.Add(new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward));
         }
     }
 
