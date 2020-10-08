@@ -17,3 +17,10 @@ nuevo player manda request del estado del juego, server manda world info // Done
 * Refactorear los inputs para que se identifiquen y si me llegan viejos no los aplique constantemente. //Done
 * Cambiar el apply inputs de simulation client para que aplique las lista si es que hace falta, pero creo que no porque aplica de a uno.
 * Hacer lo de fixed update
+* El character controller saca rigidbody
+* Una clase por arriba que todo el tiempo absorve los paquetes y mandando los ack y arriba de eso el tiene la clase del server que utiliza los inputs para procesar.
+* El GetKey() en vez del GetKeyDown(), Las acciones como saltos o eventos esos si buscarlos en el Update y agregarlos a una cola pero los de movimeinto, en el FixedUpdate.
+* Podemos asignar siempre el de la prediccion si queremos, en vez de la comparacion.
+A considerar capaz conviene.
+* En update solo se guarda en la cola y ejecuto y envio en fixedUpdate
+* La fuerza multiplicarla por fixed delta time

@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class PlayerMotion
 {
+    private static float playerSpeed = 2f;
+    
     private static Vector3 AnalyzeInput(int inputs)
     {
         Vector3 appliedForce = Vector3.zero;
@@ -24,19 +25,18 @@ public class PlayerMotion
         return appliedForce;
     }
 
-    public static void ApplyInputs(int startInput, List<int> inputsToExecute, Rigidbody player)
+    public static void ApplyInputs(int startInput, List<int> inputsToExecute, CharacterController player)
     {
         for (int i = startInput; i < inputsToExecute.Count; i++)
         {
             Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
-            player.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
+            player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
         }
     }
     
-    public static void ApplyInput(int input, Rigidbody player)
+    public static void ApplyInput(int input, CharacterController player)
     {
         Vector3 appliedForce = AnalyzeInput(input);
-        player.AddForceAtPosition(appliedForce, Vector3.zero, ForceMode.Impulse);
-                
+        player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
     }
 }

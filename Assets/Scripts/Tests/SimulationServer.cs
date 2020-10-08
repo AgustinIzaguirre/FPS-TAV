@@ -4,6 +4,7 @@ using System.Net;
 using Tests;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Experimental.PlayerLoop;
 using Debug = UnityEngine.Debug;
 
 public class SimulationServer
@@ -12,7 +13,7 @@ public class SimulationServer
     private Dictionary<int, GameObject> clientsCubes;
     private Dictionary<int, ClientInfo> clients;
     private Dictionary<int, bool> activePlayers;
-    private Dictionary<int, int> playerInputsApplied;
+    private Dictionary<int, List<int>> inputsToApply;
     private Channel channel;
     private float timeToSend;
     private float elapsedTime;
@@ -29,7 +30,7 @@ public class SimulationServer
         clientsCubes = new Dictionary<int, GameObject>();
         clients = new Dictionary<int, ClientInfo>();
         activePlayers = new Dictionary<int, bool>();
-        playerInputsApplied = new Dictionary<int, int>();
+        inputsToApply = new Dictionary<int, List<int>>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
         this.serverPrefab = serverPrefab;
@@ -64,7 +65,6 @@ public class SimulationServer
              int playerId = currentEvent.playerId;
              SendNewPlayerEvent(playerId, currentEvent.newPlayer, destinationId);
              newPlayerEventSent.RemoveAt(0);
-             
          }
          
          while (startInfoSent.Count > 0 && (serverTime - startInfoSent[0].time) >= eventTimeOut)
@@ -107,6 +107,17 @@ public class SimulationServer
          return currentWorldInfo;
      }
 
+     public void ServerFixedUpdate()
+     {
+         foreach (var clientId in clients.Keys)
+         {
+             PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
+                     clientsCubes[clientId].GetComponent<CharacterController>());
+
+             inputsToApply[clientId].Clear();
+         }
+         
+     }
      private void ReceivePackets()
     {
         var packet = channel.GetPacket();
@@ -125,8 +136,17 @@ public class SimulationServer
                     int ackNumber = packet.buffer.GetInt();
                     SendAck(ackNumber, PacketType.ACK, currentClient.endPoint);
                     int firstInput = currentClient.lastInputApplied + 1 - startInput;
-                    PlayerMotion.ApplyInputs(firstInput, inputsToExecute,
-                        clientsCubes[clientId].GetComponent<Rigidbody>());
+                    //TODO separate on function
+                    if (inputsToApply[clientId] == null)
+                    {
+                        inputsToApply[clientId] = new List<int>();
+                    }
+                    for (int i = firstInput; i < inputsToExecute.Count; i++)
+                    {
+                        inputsToApply[clientId].Add(inputsToExecute[i]);
+                    }
+//                    PlayerMotion.ApplyInputs(firstInput, inputsToExecute,
+//                        clientsCubes[clientId].GetComponent<Rigidbody>());
                     currentClient.lastInputApplied = ackNumber;
                 }
             }
@@ -150,6 +170,7 @@ public class SimulationServer
                 if (!clients.ContainsKey(clientId))
                 {
                     clients[clientId] = new ClientInfo(clientId, clientEndPoint);
+                    inputsToApply[clientId] = new List<int>();
 //                    Debug.Log("clients.Count = " + clients.Count);
                     SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
                     GenerateNewPlayer(clientId);

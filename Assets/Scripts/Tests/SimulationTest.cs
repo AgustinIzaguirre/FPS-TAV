@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ public class SimulationTest : MonoBehaviour
 {
     [SerializeField] private GameObject serverPrefab;
     [SerializeField] private GameObject clientPrefab;
+    [SerializeField] private GameObject simulationPrefab;
 
     private Rigidbody cubeServerRigidBody;
     private int packetsPerSecond = 60;
@@ -39,6 +41,15 @@ public class SimulationTest : MonoBehaviour
             client.DestroyChannel();
         }
         server.DestroyChannel();
+    }
+
+    private void FixedUpdate()
+    {
+        if (clients.Count > 0)
+        {
+            clients[1].ClientFixedUpdate(server.GetChannel());
+        }
+        server.ServerFixedUpdate();
     }
 
     void Update()
@@ -128,7 +139,7 @@ public class SimulationTest : MonoBehaviour
         int clientId = lastClientId + 1;
         int portNumber = clientId + 9000;
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
-            serverEndPoint, clientPrefab);
+            serverEndPoint, clientPrefab, simulationPrefab);
         clients[clientId] = client;
         lastClientId++;
         SendPlayerJoinEvent(clientId);

@@ -84,13 +84,18 @@ public class CubeEntity
             Math.Abs(position.y - otherPosition.y) > positionThreshold ||
             Math.Abs(position.z - otherPosition.z) > positionThreshold)
         {
+            Debug.Log("Position not equal");
             return false;
         }
 
-        if (Math.Abs(rotation.x - otherRotation.x) > rotationThreshold ||
-            Math.Abs(rotation.y - otherRotation.y) > rotationThreshold ||
-            Math.Abs(rotation.z - otherRotation.z) > rotationThreshold)
+        if ((Math.Abs(rotation.x - otherRotation.x) > rotationThreshold && 
+             Math.Abs((360.0 - rotation.x) - otherRotation.x) > rotationThreshold)||
+            (Math.Abs(rotation.y - otherRotation.y) > rotationThreshold &&
+             Math.Abs((360.0 - rotation.y) - otherRotation.y) > rotationThreshold) ||
+            (Math.Abs(rotation.z - otherRotation.z) > rotationThreshold &&
+             Math.Abs(360.0 - rotation.z - otherRotation.z) > rotationThreshold))
         {
+            Debug.Log("Rotation not equal");
             return false;
         }
 
