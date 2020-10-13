@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2703948289432927363}
   - component: {fileID: 2703948289432927362}
   - component: {fileID: 2703948289432927361}
+  - component: {fileID: 3550626274520441189}
   m_Layer: 8
   m_Name: ServerPlayer
   m_TagString: Untagged
@@ -97,3 +98,16 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.0001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3550626274520441189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2703948289432927360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 134f3fabdde14dbbb9ffb5b5b8632d74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravity: 9.81
