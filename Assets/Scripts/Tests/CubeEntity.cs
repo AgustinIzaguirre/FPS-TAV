@@ -6,6 +6,7 @@ public class CubeEntity
     public Vector3 position;
     public Vector3 eulerAngles;
     public GameObject cubeGameObject;
+    public float verticalVelocity;
 
     public CubeEntity(GameObject cubeGameObject) {
         this.cubeGameObject = cubeGameObject;
@@ -16,6 +17,11 @@ public class CubeEntity
         this.cubeGameObject = cubeGameObject;
         this.position = position;
         this.eulerAngles = eulerAngles;
+    }
+    
+    public CubeEntity(GameObject cubeGameObject, float verticalVelocity) {
+        this.cubeGameObject = cubeGameObject;
+        this.verticalVelocity = verticalVelocity;
     }
     
     public void Serialize(BitBuffer buffer) {
@@ -30,6 +36,7 @@ public class CubeEntity
         DegreeAngle.SerializeAngle(buffer, eulerAngles.x);
         DegreeAngle.SerializeAngle(buffer, eulerAngles.y);
         DegreeAngle.SerializeAngle(buffer, eulerAngles.z);
+        buffer.PutFloat(this.verticalVelocity);
     }
 
     public void Deserialize(BitBuffer buffer) {
@@ -41,6 +48,7 @@ public class CubeEntity
         eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
         eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
         eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
+        verticalVelocity = buffer.GetFloat();
     }
 
     public static CubeEntity DeserializeInfo(BitBuffer buffer)

@@ -198,9 +198,12 @@ public class SimulationClient
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
 //        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
         int quantity = lastClientInput - lastServerInput;
+        float verticalVelocity = serverPlayer.verticalVelocity;
         for (int i = 0; i < appliedInputs.Count && i <= quantity; i++)
         {
-          PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController);  
+            simulationGravityController.ApplyGravity(verticalVelocity);
+            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController);
+            verticalVelocity = simulationGravityController.GetVerticalVelocity();
         }
     }
 
@@ -360,7 +363,6 @@ public class SimulationClient
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    
                     if (playerId != id)
                     {
                         if (currentWorldInfo.players.ContainsKey(playerId) &&

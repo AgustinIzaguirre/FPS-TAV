@@ -35,13 +35,26 @@ public class GravityController : MonoBehaviour
         }
     }
 
+    public void ApplyGravity(float currentVelocity)
+    {
+        verticalVelocity = currentVelocity;
+        if (controller.isGrounded || (currentVelocity > -0.0005f && currentVelocity < 0.0005f))
+        {
+            verticalVelocity = 0;
+            isJumping = false;
+        }
+        else
+        {
+            verticalVelocity = startVelocity - gravity * Time.fixedDeltaTime;
+        }
+    }
+
     public void Jump(float verticalVelocity)
     {
         isJumping = true;
         time = 0;
         startVelocity = verticalVelocity;
         this.verticalVelocity = verticalVelocity;
-        
     }
 
     public float GetVerticalVelocity()
