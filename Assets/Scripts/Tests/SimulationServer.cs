@@ -112,9 +112,10 @@ public class SimulationServer
      {
          foreach (var clientId in clients.Keys)
          {
+             Transform clientTransform = clientsCubes[clientId].transform;
              PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
                      clientsCubes[clientId].GetComponent<CharacterController>(),
-                     clientsCubes[clientId].GetComponent<GravityController>());
+                     clientsCubes[clientId].GetComponent<GravityController>(), clientTransform);
              inputsToApply[clientId].Clear();
          }
      }

@@ -199,10 +199,12 @@ public class SimulationClient
 //        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
         int quantity = lastClientInput - lastServerInput;
         float verticalVelocity = serverPlayer.verticalVelocity;
+        Transform predictionTransform = playerPrediction.transform;
         for (int i = 0; i < appliedInputs.Count && i <= quantity; i++)
         {
             simulationGravityController.ApplyGravity(verticalVelocity);
-            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController);
+            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController,
+                predictionTransform);
             verticalVelocity = simulationGravityController.GetVerticalVelocity();
         }
     }
@@ -238,6 +240,10 @@ public class SimulationClient
             moveBackward = true;
         }
 
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseSensitivity = 100f;
+        players[id].transform.Rotate(Vector3.up * (mouseX * mouseSensitivity * Time.fixedDeltaTime));
+        
         return new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward);
     }
 
@@ -267,20 +273,22 @@ public class SimulationClient
     private void SendInputToServer(Channel serverChannel)
     {
         var packet = Packet.Obtain();
+        
         // TODO Maybe separate in function
+        Transform transform = players[id].transform;
         int actionInputsize = inputsToExecute.Count;
         foreach (var input in inputsToExecute)
         {
             sentInputs.Add(input.value);
             appliedInputs.Add(input.value);
-            PlayerMotion.ApplyInput(input.value, clientController, gravityController);
+            PlayerMotion.ApplyInput(input.value, clientController, gravityController, transform);
             lastClientInput += 1;
         }
         inputsToExecute.Clear();
         GameInput currentInput = GetUserInput();
         sentInputs.Add(currentInput.value);
         appliedInputs.Add(currentInput.value);
-        PlayerMotion.ApplyInput(currentInput.value, clientController, gravityController);
+        PlayerMotion.ApplyInput(currentInput.value, clientController, gravityController, transform);
         lastClientInput += 1;
         packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
         packet.buffer.PutInt(id);
