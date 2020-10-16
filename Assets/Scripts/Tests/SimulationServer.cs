@@ -100,7 +100,8 @@ public class SimulationServer
          WorldInfo currentWorldInfo = new WorldInfo();
          foreach (var clientId in clientsCubes.Keys)
          {
-             CubeEntity clientEntity = new CubeEntity(clientsCubes[clientId]);
+             float clientVelocity = clientsCubes[clientId].GetComponent<GravityController>().GetVerticalVelocity();
+             CubeEntity clientEntity = new CubeEntity(clientsCubes[clientId], clientVelocity);
              currentWorldInfo.AddPlayer(clientId, clientEntity, clients[clientId].lastInputApplied);
          }
 
@@ -112,12 +113,12 @@ public class SimulationServer
          foreach (var clientId in clients.Keys)
          {
              PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
-                     clientsCubes[clientId].GetComponent<CharacterController>());
-
+                     clientsCubes[clientId].GetComponent<CharacterController>(),
+                     clientsCubes[clientId].GetComponent<GravityController>());
              inputsToApply[clientId].Clear();
          }
-         
      }
+     
      private void ReceivePackets()
     {
         var packet = channel.GetPacket();

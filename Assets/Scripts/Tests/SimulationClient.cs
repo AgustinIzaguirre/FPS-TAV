@@ -13,6 +13,8 @@ public class SimulationClient
     
     private CharacterController clientController;
     private CharacterController predictionController;
+    private GravityController gravityController;
+    private GravityController simulationGravityController;
     private Channel channel;
     private List<int> sentInputs;
     private List<int> appliedInputs;
@@ -196,9 +198,12 @@ public class SimulationClient
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
 //        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
         int quantity = lastClientInput - lastServerInput;
+        float verticalVelocity = serverPlayer.verticalVelocity;
         for (int i = 0; i < appliedInputs.Count && i <= quantity; i++)
         {
-          PlayerMotion.ApplyInput(appliedInputs[i], predictionController);  
+            simulationGravityController.ApplyGravity(verticalVelocity);
+            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController);
+            verticalVelocity = simulationGravityController.GetVerticalVelocity();
         }
     }
 
@@ -268,14 +273,14 @@ public class SimulationClient
         {
             sentInputs.Add(input.value);
             appliedInputs.Add(input.value);
-            PlayerMotion.ApplyInput(input.value, clientController);
+            PlayerMotion.ApplyInput(input.value, clientController, gravityController);
             lastClientInput += 1;
         }
         inputsToExecute.Clear();
         GameInput currentInput = GetUserInput();
         sentInputs.Add(currentInput.value);
         appliedInputs.Add(currentInput.value);
-        PlayerMotion.ApplyInput(currentInput.value, clientController);
+        PlayerMotion.ApplyInput(currentInput.value, clientController, gravityController);
         lastClientInput += 1;
         packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
         packet.buffer.PutInt(id);
@@ -358,7 +363,6 @@ public class SimulationClient
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    
                     if (playerId != id)
                     {
                         if (currentWorldInfo.players.ContainsKey(playerId) &&
@@ -422,8 +426,10 @@ public class SimulationClient
             players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
             isSpawned = true;
             clientController = players[id].GetComponent<CharacterController>();
+            gravityController = players[id].GetComponent<GravityController>();
             playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
             predictionController = playerPrediction.GetComponent<CharacterController>();
+            simulationGravityController = playerPrediction.GetComponent<GravityController>();
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
     }
     
