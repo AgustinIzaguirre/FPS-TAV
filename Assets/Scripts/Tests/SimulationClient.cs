@@ -10,7 +10,10 @@ public class SimulationClient
     private GameObject clientPrefab;
     public GameObject simulationPrefab;
 
+
+    private float xRotation = 0f;
     
+    private Camera playerCamera;
     private CharacterController clientController;
     private CharacterController predictionController;
     private GravityController gravityController;
@@ -223,25 +226,29 @@ public class SimulationClient
     private GameInput GetUserInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
         {
             moveLeft = true;
         }
-        if (Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
         {
             moveRight = true;
         }
-        if (Input.GetKey(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
         {
             moveForward = true;
         }
-        if (Input.GetKey(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
         {
             moveBackward = true;
         }
 
         float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
+        xRotation -= mouseY;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         float mouseSensitivity = 100f;
+        playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         players[id].transform.Rotate(Vector3.up * (mouseX * mouseSensitivity * Time.fixedDeltaTime));
         
         return new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward);
@@ -438,6 +445,7 @@ public class SimulationClient
             playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
             predictionController = playerPrediction.GetComponent<CharacterController>();
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
+            playerCamera = players[id].GetComponentInChildren< Camera >();
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
     }
     

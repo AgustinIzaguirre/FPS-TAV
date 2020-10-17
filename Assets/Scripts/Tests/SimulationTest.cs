@@ -33,6 +33,7 @@ public class SimulationTest : MonoBehaviour
         server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
         Application.targetFrameRate = 60;
         time = 0f;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     private void OnDestroy() {
