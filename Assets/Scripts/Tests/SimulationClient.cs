@@ -8,8 +8,8 @@ using UnityEngine.AI;
 public class SimulationClient
 {
     private GameObject clientPrefab;
-    public GameObject simulationPrefab;
-
+    private GameObject simulationPrefab;
+    private GameObject enemyPrefab;
 
     private float xRotation = 0f;
     
@@ -42,7 +42,7 @@ public class SimulationClient
     private IPEndPoint serverEndPoint;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab)
+        IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
@@ -67,6 +67,7 @@ public class SimulationClient
         lastClientInput = 0;
         lastServerInput = 0;
         this.simulationPrefab = simulationPrefab;
+        this.enemyPrefab = enemyPrefab;
     }
 
     public void UpdateClient(Channel serverChannel)
@@ -107,7 +108,7 @@ public class SimulationClient
                         {
                             Debug.Log("Not equals");
                             players[id].transform.position = playerPrediction.transform.position;
-                            players[id].transform.rotation = playerPrediction.transform.rotation;
+//                            players[id].transform.rotation = playerPrediction.transform.rotation;
                         }
                     
                     }
@@ -469,7 +470,7 @@ public class SimulationClient
     {
         Vector3 position = playerCube.position;
         Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
-        GameObject player = GameObject.Instantiate(clientPrefab, position, rotation) as GameObject;
+        GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
         players[playerId] = player;
     }
 }
