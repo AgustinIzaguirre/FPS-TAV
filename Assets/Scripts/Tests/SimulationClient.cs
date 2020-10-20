@@ -239,7 +239,7 @@ public class SimulationClient
     
     private GameInput GetRotationInput()
     {
-        RotateCamera();
+//        RotateCamera();
         float mouseX = Input.GetAxis("Mouse X");
         return new GameInput(mouseX);
     }
@@ -255,10 +255,13 @@ public class SimulationClient
         
         // Rotation inputs
         GameInput rotationInput = GetRotationInput();
-        sentInputs.Add(rotationInput);
-        appliedInputs.Add(rotationInput);
-        PlayerMotion.ApplyInput(rotationInput, clientController, gravityController, transform);
-        lastClientInput += 1;
+        if (rotationInput.floatValue != 0f)
+        {
+            sentInputs.Add(rotationInput);
+            appliedInputs.Add(rotationInput);
+            PlayerMotion.ApplyInput(rotationInput, clientController, gravityController, transform);
+            lastClientInput += 1;
+        }
     }
 
     private void RotateCamera()
@@ -317,7 +320,8 @@ public class SimulationClient
         packet.buffer.Flush();
         serverChannel.Send(packet, serverEndPoint);
         packet.Free();
-        lastInputSent += 1 + actionInputsize;
+        // lastClientInput - lastInputSent because it can send one or two inputs depending on rotation
+        lastInputSent += (lastClientInput - lastInputSent) + actionInputsize;
     }
 
     private void CheckForGameEvents(Channel serverChannel)
