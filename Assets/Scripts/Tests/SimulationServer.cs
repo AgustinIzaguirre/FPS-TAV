@@ -13,7 +13,7 @@ public class SimulationServer
     private Dictionary<int, GameObject> clientsCubes;
     private Dictionary<int, ClientInfo> clients;
     private Dictionary<int, bool> activePlayers;
-    private Dictionary<int, List<int>> inputsToApply;
+    private Dictionary<int, List<GameInput>> inputsToApply;
     private Channel channel;
     private float timeToSend;
     private float elapsedTime;
@@ -30,7 +30,7 @@ public class SimulationServer
         clientsCubes = new Dictionary<int, GameObject>();
         clients = new Dictionary<int, ClientInfo>();
         activePlayers = new Dictionary<int, bool>();
-        inputsToApply = new Dictionary<int, List<int>>();
+        inputsToApply = new Dictionary<int, List<GameInput>>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
         this.serverPrefab = serverPrefab;
@@ -134,14 +134,14 @@ public class SimulationServer
                 {
                     ClientInfo currentClient = clients[clientId];
                     int startInput = packet.buffer.GetInt();
-                    List<int> inputsToExecute = GameInput.Deserialize(packet.buffer);
+                    List<GameInput> inputsToExecute = GameInput.Deserialize(packet.buffer);
                     int ackNumber = packet.buffer.GetInt();
                     SendAck(ackNumber, PacketType.ACK, currentClient.endPoint);
                     int firstInput = currentClient.lastInputApplied + 1 - startInput;
                     //TODO separate on function
                     if (inputsToApply[clientId] == null)
                     {
-                        inputsToApply[clientId] = new List<int>();
+                        inputsToApply[clientId] = new List<GameInput>();
                     }
                     for (int i = firstInput; i < inputsToExecute.Count; i++)
                     {
@@ -172,7 +172,7 @@ public class SimulationServer
                 if (!clients.ContainsKey(clientId))
                 {
                     clients[clientId] = new ClientInfo(clientId, clientEndPoint);
-                    inputsToApply[clientId] = new List<int>();
+                    inputsToApply[clientId] = new List<GameInput>();
 //                    Debug.Log("clients.Count = " + clients.Count);
                     SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
                     GenerateNewPlayer(clientId);

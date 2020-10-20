@@ -24,3 +24,6 @@ nuevo player manda request del estado del juego, server manda world info // Done
 A considerar capaz conviene.
 * En update solo se guarda en la cola y ejecuto y envio en fixedUpdate
 * La fuerza multiplicarla por fixed delta time
+* Hacer que el input de rotacion sea un input en si mismo.
+* Cambiar el input game que tanga un bit indicando si es float o int y que tenga un value y float value, y en el serialize serializo y deserializo en funcion de eso
+* Ademas cuando es rotacion se manda como un nuevo input.
