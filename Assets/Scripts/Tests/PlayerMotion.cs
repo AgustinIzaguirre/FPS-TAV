@@ -5,50 +5,70 @@ public class PlayerMotion
 {
     private static float playerSpeed = 10f;
     private static float jumpSpeed = 1.5f;
-    
-    private static Vector3 AnalyzeInput(int inputs)
+    private static readonly float MOUSE_SENSITIVITY = 100f;
+
+
+    private static Vector3 AnalyzeInput(int inputs, Transform transform)
     {
         Vector3 appliedForce = Vector3.zero;
         ;
         if ((inputs & ((int) InputType.JUMP)) > 0)
         {
-            appliedForce += Vector3.up * jumpSpeed;
+            appliedForce += transform.up * jumpSpeed;
         } 
         if ((inputs & ((int) InputType.LEFT)) > 0)
         {
-            appliedForce += Vector3.left;
+            appliedForce += -transform.right;
         }
         if ((inputs & ((int) InputType.RIGHT)) > 0)
         {
-            appliedForce += Vector3.right;
+            appliedForce += transform.right;
         }
         if ((inputs & ((int) InputType.FORWARD)) > 0)
         {
-            appliedForce += Vector3.forward;
+            appliedForce += transform.forward;
         }
         if ((inputs & ((int) InputType.BACKWARD)) > 0)
         {
-            appliedForce += Vector3.back;
+            appliedForce += -transform.forward;
         }
 
         return appliedForce;
     }
 
-    public static void ApplyInputs(int startInput, List<int> inputsToExecute, CharacterController player)
+    public static void ApplyInputs(int startInput, List<GameInput> inputsToExecute, CharacterController player,
+        GravityController gravityController, Transform transform)
     {
         for (int i = startInput; i < inputsToExecute.Count; i++)
         {
-            Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
-            player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
+            if (inputsToExecute[i].intputValueType == InputValueType.INTEGER_VALUE)
+            {
+                Vector3 appliedForce = AnalyzeInput(inputsToExecute[i].value, transform);
+                if (appliedForce.y > 0)
+                {
+                    gravityController.Jump(appliedForce.y);
+                }
+                else
+                {
+                    appliedForce.y = gravityController.GetVerticalVelocity();
+                }
+
+                player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
+            }
+            else if (inputsToExecute[i].intputValueType == InputValueType.FLOAT_VALUE)
+            {
+                float rotationValue = inputsToExecute[i].floatValue;
+                transform.Rotate(Vector3.up * (rotationValue * MOUSE_SENSITIVITY * Time.fixedDeltaTime));
+            }
         }
     }
-    
-    public static void ApplyInputs(int startInput, List<int> inputsToExecute, CharacterController player,
-        GravityController gravityController)
+
+    public static void ApplyInput(GameInput input, CharacterController player, GravityController gravityController,
+        Transform transform)
     {
-        for (int i = startInput; i < inputsToExecute.Count; i++)
+        if (input.intputValueType == InputValueType.INTEGER_VALUE)
         {
-            Vector3 appliedForce = AnalyzeInput(inputsToExecute[i]);
+            Vector3 appliedForce = AnalyzeInput(input.value, transform);
             if (appliedForce.y > 0)
             {
                 gravityController.Jump(appliedForce.y);
@@ -57,27 +77,13 @@ public class PlayerMotion
             {
                 appliedForce.y = gravityController.GetVerticalVelocity();
             }
+
             player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
         }
-    }
-
-    public static void ApplyInput(int input, CharacterController player)
-    {
-        Vector3 appliedForce = AnalyzeInput(input);
-        player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
-    }
-    
-    public static void ApplyInput(int input, CharacterController player, GravityController gravityController)
-    {
-        Vector3 appliedForce = AnalyzeInput(input);
-        if (appliedForce.y > 0)
+        else if (input.intputValueType == InputValueType.FLOAT_VALUE)
         {
-            gravityController.Jump(appliedForce.y);
+            float rotationValue = input.floatValue;
+            transform.Rotate(Vector3.up * (rotationValue * MOUSE_SENSITIVITY * Time.fixedDeltaTime));
         }
-        else
-        {
-            appliedForce.y = gravityController.GetVerticalVelocity();
-        }
-        player.Move(appliedForce * (playerSpeed * Time.fixedDeltaTime));
     }
 }

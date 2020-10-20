@@ -10,14 +10,17 @@ public class SimulationClient
     private GameObject clientPrefab;
     public GameObject simulationPrefab;
 
+
+    private float xRotation = 0f;
     
+    private Camera playerCamera;
     private CharacterController clientController;
     private CharacterController predictionController;
     private GravityController gravityController;
     private GravityController simulationGravityController;
     private Channel channel;
-    private List<int> sentInputs;
-    private List<int> appliedInputs;
+    private List<GameInput> sentInputs;
+    private List<GameInput> appliedInputs;
     private List<GameEvent> sentEvents;
     private List<Snapshot> interpolationBuffer;
     private List<GameInput> inputsToExecute;
@@ -44,8 +47,8 @@ public class SimulationClient
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
         players = new Dictionary<int, GameObject>();
-        sentInputs = new List<int>();
-        appliedInputs = new List<int>();
+        sentInputs = new List<GameInput>();
+        appliedInputs = new List<GameInput>();
         sentEvents = new List<GameEvent>();
         inputsToExecute = new List<GameInput>();
         render = false;
@@ -77,9 +80,6 @@ public class SimulationClient
         if (isPlaying)
         {
             GetUserActionInput();
-////            Debug.Log("Sending input for clientId = " + id + " at time = " + clientTime);
-//            SendInputToServer(serverChannel);
-//            CheckForGameEvents(serverChannel);
         }
 
         var packet = channel.GetPacket();
@@ -101,14 +101,13 @@ public class SimulationClient
                         CalculatePrediction(currentSnapshot.worldInfo.players[id]);
                         CubeEntity predictionEntity = new CubeEntity(playerPrediction);
                         CubeEntity playerEntity = new CubeEntity(players[id]);
-                        // TODO remove from serverInput to lastInput
-                        RemoveFromList(lastServerInput, lastInput, appliedInputs);
+                        RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                         lastServerInput = lastInput;
                         if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                         {
                             Debug.Log("Not equals");
-//                            players[id].transform.position = playerPrediction.transform.position;
-//                            players[id].transform.rotation = playerPrediction.transform.rotation;
+                            players[id].transform.position = playerPrediction.transform.position;
+                            players[id].transform.rotation = playerPrediction.transform.rotation;
                         }
                     
                     }
@@ -147,12 +146,10 @@ public class SimulationClient
                     {
                         if (id == playerId)
                         {
-//                            Debug.Log("Spawning own with id = " + playerId);
                             Spawn(newPlayerEvent.newPlayer);
                         }
                         else
                         {
-//                            Debug.Log("Spawning player with id = " + playerId);
                             SpawnPlayer(playerId, newPlayerEvent.newPlayer);
                         }
                     }
@@ -168,8 +165,6 @@ public class SimulationClient
                     {
                         if (playerId != id && !players.ContainsKey(playerId))
                         {
-                            
-//                            Debug.Log("Spawning player with id = " + playerId);
                             SpawnPlayer(playerId, worldInfo.players[playerId]);
                         }
                     }
@@ -183,7 +178,7 @@ public class SimulationClient
         } 
     }
 
-    private void RemoveFromList(int start, int end, List<int> list)
+    private void RemoveInputsFromList(int start, int end, List<GameInput> list)
     {
         int size = list.Count;
         for (int i = 0; i < size && i <= end - start; i++)
@@ -196,13 +191,14 @@ public class SimulationClient
     {
         playerPrediction.transform.position = serverPlayer.position;
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
-//        Debug.Log("lastClientInput: " + lastClientInput + ", lastServerInput: " + lastServerInput);
         int quantity = lastClientInput - lastServerInput;
         float verticalVelocity = serverPlayer.verticalVelocity;
+        Transform predictionTransform = playerPrediction.transform;
         for (int i = 0; i < appliedInputs.Count && i <= quantity; i++)
         {
             simulationGravityController.ApplyGravity(verticalVelocity);
-            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController);
+            PlayerMotion.ApplyInput(appliedInputs[i], predictionController, simulationGravityController,
+                predictionTransform);
             verticalVelocity = simulationGravityController.GetVerticalVelocity();
         }
     }
@@ -218,27 +214,59 @@ public class SimulationClient
         packet.Free();    
     }
 
-    private GameInput GetUserInput()
+    private GameInput GetUserMovementInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
         {
             moveLeft = true;
         }
-        if (Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
         {
             moveRight = true;
         }
-        if (Input.GetKey(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
         {
             moveForward = true;
         }
-        if (Input.GetKey(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
         {
             moveBackward = true;
         }
-
+        
         return new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward);
+    }
+    
+    private GameInput GetRotationInput()
+    {
+        RotateCamera();
+        float mouseX = Input.GetAxis("Mouse X");
+        return new GameInput(mouseX);
+    }
+
+    private void GetUserInputs(Transform transform)
+    {
+        // Movement inputs
+        GameInput movementInput = GetUserMovementInput();
+        sentInputs.Add(movementInput);
+        appliedInputs.Add(movementInput);
+        PlayerMotion.ApplyInput(movementInput, clientController, gravityController, transform);
+        lastClientInput += 1;
+        
+        // Rotation inputs
+        GameInput rotationInput = GetRotationInput();
+        sentInputs.Add(rotationInput);
+        appliedInputs.Add(rotationInput);
+        PlayerMotion.ApplyInput(rotationInput, clientController, gravityController, transform);
+        lastClientInput += 1;
+    }
+
+    private void RotateCamera()
+    {
+        float mouseY = Input.GetAxis("Mouse Y");
+        xRotation -= mouseY;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+        playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
     }
 
     private void GetUserActionInput()
@@ -267,21 +295,21 @@ public class SimulationClient
     private void SendInputToServer(Channel serverChannel)
     {
         var packet = Packet.Obtain();
+        
         // TODO Maybe separate in function
+        Transform transform = players[id].transform;
         int actionInputsize = inputsToExecute.Count;
         foreach (var input in inputsToExecute)
         {
-            sentInputs.Add(input.value);
-            appliedInputs.Add(input.value);
-            PlayerMotion.ApplyInput(input.value, clientController, gravityController);
+            sentInputs.Add(input);
+            appliedInputs.Add(input);
+            PlayerMotion.ApplyInput(input, clientController, gravityController, transform);
             lastClientInput += 1;
         }
         inputsToExecute.Clear();
-        GameInput currentInput = GetUserInput();
-        sentInputs.Add(currentInput.value);
-        appliedInputs.Add(currentInput.value);
-        PlayerMotion.ApplyInput(currentInput.value, clientController, gravityController);
-        lastClientInput += 1;
+        
+        GetUserInputs(transform);
+
         packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
         packet.buffer.PutInt(id);
         packet.buffer.PutInt(lastInputRemoved + 1);
@@ -420,7 +448,6 @@ public class SimulationClient
 
     public void Spawn(CubeEntity clientCube)
     {
-//            Debug.Log("Spawning own2 clientId = " + id);
             Vector3 position = clientCube.position;
             Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
             players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
@@ -430,6 +457,7 @@ public class SimulationClient
             playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
             predictionController = playerPrediction.GetComponent<CharacterController>();
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
+            playerCamera = players[id].GetComponentInChildren< Camera >();
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
     }
     
