@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerMotion
 {
-    private static float playerSpeed = 10f;
+    private static float playerSpeed = 5f;
     private static float jumpSpeed = 1.5f;
     private static readonly float MOUSE_SENSITIVITY = 100f;
 

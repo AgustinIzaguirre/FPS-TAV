@@ -50,23 +50,6 @@ public class GameInput
         this.value = value;
         intputValueType = InputValueType.INTEGER_VALUE;
     }
-//    private int CalculateRotationValue(float playerRotation)
-//    {
-//        // from 1 to 31 negatives, from 32 to 61 positives
-//        float step = 1f / 31f;
-//        int rotationvalue = 0;
-//        if (playerRotation > 0)
-//        {
-//            rotationvalue = (int) Math.Ceiling((double)(playerRotation / step)) + 31;
-//        }
-//        else
-//        {
-//            playerRotation = -playerRotation;
-//            rotationvalue = (int) Math.Ceiling((double)(playerRotation / step));
-//        }
-//        rotationvalue = rotationvalue << ROTATION_OFFSET;
-//        return rotationvalue;
-//    }
 
     public static void Serialize(List<GameInput> inputsToSend, int lastInputSent, BitBuffer buffer)
     {

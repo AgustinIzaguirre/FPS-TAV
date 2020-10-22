@@ -8,6 +8,7 @@ public class SimulationTest : MonoBehaviour
     [SerializeField] private GameObject serverPrefab;
     [SerializeField] private GameObject clientPrefab;
     [SerializeField] private GameObject simulationPrefab;
+    [SerializeField] private GameObject enemyPrefab;
 
     private Rigidbody cubeServerRigidBody;
     private int packetsPerSecond = 60;
@@ -140,7 +141,7 @@ public class SimulationTest : MonoBehaviour
         int clientId = lastClientId + 1;
         int portNumber = clientId + 9000;
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
-            serverEndPoint, clientPrefab, simulationPrefab);
+            serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
         clients[clientId] = client;
         lastClientId++;
         SendPlayerJoinEvent(clientId);

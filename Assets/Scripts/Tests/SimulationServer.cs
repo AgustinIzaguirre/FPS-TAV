@@ -61,7 +61,6 @@ public class SimulationServer
          {
              NewPlayerEvent currentEvent = newPlayerEventSent[0];
              int destinationId = currentEvent.destinationId;
-//             Debug.Log("Resending to clientId =" + destinationId);
              int playerId = currentEvent.playerId;
              SendNewPlayerEvent(playerId, currentEvent.newPlayer, destinationId);
              newPlayerEventSent.RemoveAt(0);
@@ -69,8 +68,6 @@ public class SimulationServer
          
          while (startInfoSent.Count > 0 && (serverTime - startInfoSent[0].time) >= eventTimeOut)
          {
-//             Debug.Log("Resending startInfo");
-
              StartInfoEvent currentEvent = startInfoSent[0];
              int destinationId = currentEvent.clientId;
              SendStartInfo(destinationId);
@@ -147,8 +144,6 @@ public class SimulationServer
                     {
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
-//                    PlayerMotion.ApplyInputs(firstInput, inputsToExecute,
-//                        clientsCubes[clientId].GetComponent<Rigidbody>());
                     currentClient.lastInputApplied = ackNumber;
                 }
             }
@@ -173,7 +168,6 @@ public class SimulationServer
                 {
                     clients[clientId] = new ClientInfo(clientId, clientEndPoint);
                     inputsToApply[clientId] = new List<GameInput>();
-//                    Debug.Log("clients.Count = " + clients.Count);
                     SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
                     GenerateNewPlayer(clientId);
                     activePlayers[clientId] = false;
@@ -195,7 +189,6 @@ public class SimulationServer
                 newPlayerEventSent.RemoveAt(removeIndex);
                 if (clientId == playerId && !activePlayers[clientId])
                 {
-//                    Debug.Log("sending start info");
                     SendStartInfo(clientId);
                     // sendNewWorldInfo and wait ack then activate player TODO remove i think
                 }
@@ -239,7 +232,6 @@ public class SimulationServer
         CubeEntity newPlayer = new CubeEntity(clientsCubes[playerId], position, rotation);
         foreach (var id in clients.Keys)
         {
-//            Debug.Log("Sending event to playerId = " + id);
             SendNewPlayerEvent(playerId, newPlayer, id);
         }
      }
