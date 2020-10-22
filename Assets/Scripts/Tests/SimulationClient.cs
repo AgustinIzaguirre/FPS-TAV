@@ -240,9 +240,9 @@ public class SimulationClient
     
     private GameInput GetRotationInput()
     {
-//        RotateCamera();
+        RotateCamera();
         float mouseX = Input.GetAxis("Mouse X");
-        return new GameInput(mouseX);
+        return new GameInput(mouseX, players[id].transform.eulerAngles);
     }
 
     private void GetUserInputs(Transform transform)

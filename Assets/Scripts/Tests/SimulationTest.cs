@@ -57,7 +57,7 @@ public class SimulationTest : MonoBehaviour
     void Update()
     {
         time += Time.deltaTime;
-        if (Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(KeyCode.C))
         {
             connected = !connected;
         }
