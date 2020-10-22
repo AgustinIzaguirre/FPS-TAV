@@ -58,6 +58,8 @@ public class PlayerMotion
             else if (inputsToExecute[i].intputValueType == InputValueType.FLOAT_VALUE)
             {
                 float rotationValue = inputsToExecute[i].floatValue;
+                Vector3 playerOrientation = inputsToExecute[i].playerOrientation;
+                transform.eulerAngles = playerOrientation;
                 transform.Rotate(Vector3.up * (rotationValue * MOUSE_SENSITIVITY * Time.fixedDeltaTime));
             }
         }
@@ -83,6 +85,8 @@ public class PlayerMotion
         else if (input.intputValueType == InputValueType.FLOAT_VALUE)
         {
             float rotationValue = input.floatValue;
+            Vector3 playerOrientation = input.playerOrientation;
+            transform.eulerAngles = playerOrientation;
             transform.Rotate(Vector3.up * (rotationValue * MOUSE_SENSITIVITY * Time.fixedDeltaTime));
         }
     }

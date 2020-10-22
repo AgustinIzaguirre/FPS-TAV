@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class GameInput
 {
     public int value;
     public float floatValue;
+    public Vector3 playerOrientation;
     public InputValueType intputValueType;
     public static readonly int valueTypeQuantity = 2;
     private static readonly int minValue = 0;
@@ -39,9 +41,10 @@ public class GameInput
         intputValueType = InputValueType.INTEGER_VALUE;
     }
 
-    public GameInput(float horizontalRotation)
+    public GameInput(float horizontalRotation, Vector3 playerOrientation)
     {
         floatValue = horizontalRotation;
+        this.playerOrientation = playerOrientation;
         intputValueType = InputValueType.FLOAT_VALUE;
     }
 
@@ -65,6 +68,9 @@ public class GameInput
             {
                 buffer.PutInt((int)inputsToSend[i].intputValueType, 0, valueTypeQuantity);
                 buffer.PutFloat(inputsToSend[i].floatValue);
+                buffer.PutFloat(inputsToSend[i].playerOrientation.x);
+                buffer.PutFloat(inputsToSend[i].playerOrientation.y);
+                buffer.PutFloat(inputsToSend[i].playerOrientation.z);
             }
         }
         buffer.PutInt(lastInputSent);
@@ -84,7 +90,9 @@ public class GameInput
             }
             else
             {
-                currentInput = new GameInput(buffer.GetFloat());
+                float rotation = buffer.GetFloat();
+                Vector3 orientation = new Vector3(buffer.GetFloat(), buffer.GetFloat(), buffer.GetFloat());
+                currentInput = new GameInput(rotation, orientation);
             }
             inputsToExecute.Add(currentInput);
             count -= 1;
