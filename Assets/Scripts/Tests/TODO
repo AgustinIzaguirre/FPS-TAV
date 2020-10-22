@@ -28,3 +28,5 @@ A considerar capaz conviene.
 * Cambiar el input game que tanga un bit indicando si es float o int y que tenga un value y float value, y en el serialize serializo y deserializo en funcion de eso
 * Ademas cuando es rotacion se manda como un nuevo input.
 * Terminar el menu y adaptar el SimulationTest para que haga el build.
+* La prediccion moverla en el FixedUpdate
+* El hit ejecutarlo en el update.
