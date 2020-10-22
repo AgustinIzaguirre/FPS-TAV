@@ -22,16 +22,21 @@ public class SimulationTest : MonoBehaviour
     private int lastClientId;
     private float time;
     private IPEndPoint serverEndPoint;
+    public GameMode mode = GameMode.BOTH;
 
     void Start()
     {
+        Debug.Log("GameMode is Client = " + (GameConfig.GetGameMode() == GameMode.CLIENT));
         timeToSend = (float)1 / (float)packetsPerSecond;
         timeoutForEvents = 1f;
         serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
         clients = new Dictionary<int, SimulationClient>();
         sentJoinEvents = new List<JoinEvent>();
         lastClientId = 0;
-        server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
+        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
+        {
+            server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
+        }
         Application.targetFrameRate = 60;
         time = 0f;
         Cursor.lockState = CursorLockMode.Locked;
@@ -42,16 +47,26 @@ public class SimulationTest : MonoBehaviour
         {
             client.DestroyChannel();
         }
-        server.DestroyChannel();
+
+        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
+        {
+            server.DestroyChannel();
+        }
     }
 
     private void FixedUpdate()
     {
-        if (clients.Count > 0)
+        if (mode == GameMode.CLIENT || mode == GameMode.BOTH)
         {
-            clients[1].ClientFixedUpdate(server.GetChannel());
+            if (clients.Count > 0)
+            {
+                clients[1].ClientFixedUpdate(server.GetChannel());
+            }
         }
-        server.ServerFixedUpdate();
+        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
+        {
+            server.ServerFixedUpdate();
+        }
     }
 
     void Update()
@@ -62,7 +77,7 @@ public class SimulationTest : MonoBehaviour
             connected = !connected;
         }
 
-        if (connected)
+        if (connected && (mode == GameMode.SERVER || mode == GameMode.BOTH))
         {
             server.UpdateServer();
         }

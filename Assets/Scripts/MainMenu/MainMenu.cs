@@ -1,20 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public String gameScene;
 
     public void HostGame()
     {
@@ -23,7 +15,9 @@ public class MainMenu : MonoBehaviour
 
     public void JoinGame()
     {
-        Debug.Log("Join game not implemented yet");
+        GameConfig.ConfigureGame(9000,"127.0.0.1", GameMode.CLIENT);
+        SceneManager.LoadScene(gameScene);
+//        Debug.Log("Join game not implemented yet");
     }
 
     public void QuitGame()

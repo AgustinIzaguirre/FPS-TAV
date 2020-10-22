@@ -30,3 +30,5 @@ A considerar capaz conviene.
 * Terminar el menu y adaptar el SimulationTest para que haga el build.
 * La prediccion moverla en el FixedUpdate
 * El hit ejecutarlo en el update.
+* El inicializar al jugador en todo el lugar posible evitando adentro del cuadrado que no se puede.
+* Ajustar el collider del character controller al modelo que use
