@@ -22,71 +22,69 @@ public class SimulationTest : MonoBehaviour
     private int lastClientId;
     private float time;
     private IPEndPoint serverEndPoint;
-    public GameMode mode = GameMode.BOTH;
+    public GameMode gameMode = GameMode.BOTH;
 
     void Start()
     {
-        Debug.Log("GameMode is Client = " + (GameConfig.GetGameMode() == GameMode.CLIENT));
-        timeToSend = (float)1 / (float)packetsPerSecond;
-        timeoutForEvents = 1f;
-        serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
-        clients = new Dictionary<int, SimulationClient>();
-        sentJoinEvents = new List<JoinEvent>();
-        lastClientId = 0;
-        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
+        gameMode = GameConfig.GetGameMode();
+        if (gameMode == GameMode.BOTH)
         {
+            timeToSend = (float) 1 / (float) packetsPerSecond;
+            timeoutForEvents = 1f;
+            serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
+            clients = new Dictionary<int, SimulationClient>();
+            sentJoinEvents = new List<JoinEvent>();
+            lastClientId = 0;
             server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
+            Application.targetFrameRate = 60;
+            time = 0f;
+            Cursor.lockState = CursorLockMode.Locked;
         }
-        Application.targetFrameRate = 60;
-        time = 0f;
-        Cursor.lockState = CursorLockMode.Locked;
     }
 
     private void OnDestroy() {
-        foreach(var client in clients.Values)
+        if (gameMode == GameMode.BOTH)
         {
-            client.DestroyChannel();
-        }
+            foreach (var client in clients.Values)
+            {
+                client.DestroyChannel();
+            }
 
-        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
-        {
             server.DestroyChannel();
         }
     }
 
     private void FixedUpdate()
     {
-        if (mode == GameMode.CLIENT || mode == GameMode.BOTH)
+        if (gameMode == GameMode.BOTH)
         {
             if (clients.Count > 0)
             {
                 clients[1].ClientFixedUpdate(server.GetChannel());
             }
-        }
-        if (mode == GameMode.SERVER || mode == GameMode.BOTH)
-        {
+
             server.ServerFixedUpdate();
         }
     }
 
     void Update()
     {
-        time += Time.deltaTime;
-        if (Input.GetKeyDown(KeyCode.C))
+        if (gameMode == GameMode.BOTH)
         {
-            connected = !connected;
-        }
+            time += Time.deltaTime;
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                connected = !connected;
+            }
 
-        if (connected && (mode == GameMode.SERVER || mode == GameMode.BOTH))
-        {
             server.UpdateServer();
-        }
 
-        CheckIfClientJoined();
-        
-        foreach(var client in clients.Values)
-        {
-            client.UpdateClient(server.GetChannel());
+            CheckIfClientJoined();
+
+            foreach (var client in clients.Values)
+            {
+                client.UpdateClient(server.GetChannel());
+            }
         }
     }
 
