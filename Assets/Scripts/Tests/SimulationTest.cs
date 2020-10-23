@@ -60,7 +60,7 @@ public class SimulationTest : MonoBehaviour
         {
             if (clients.Count > 0)
             {
-                clients[1].ClientFixedUpdate(server.GetChannel());
+                clients[1].ClientFixedUpdate();
             }
 
             server.ServerFixedUpdate();
@@ -86,7 +86,7 @@ public class SimulationTest : MonoBehaviour
 
             foreach (var client in clients.Values)
             {
-                client.UpdateClient(server.GetChannel());
+                client.UpdateClient();
             }
         }
     }

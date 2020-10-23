@@ -70,7 +70,7 @@ public class SimulationClient
         this.enemyPrefab = enemyPrefab;
     }
 
-    public void UpdateClient(Channel serverChannel)
+    public void UpdateClient()
     {
         
         if (render)
@@ -155,7 +155,7 @@ public class SimulationClient
                         }
                     }
                 }
-                SendAck((int) PacketType.NEW_PLAYER, playerId, serverChannel);
+                SendAck((int) PacketType.NEW_PLAYER, playerId);
             }
             if (packetType == (int) PacketType.START_INFO)
             {
@@ -169,8 +169,9 @@ public class SimulationClient
                             SpawnPlayer(playerId, worldInfo.players[playerId]);
                         }
                     }
+                    Debug.Log("Client instantiated");
                     isPlaying = true;
-                    SendAck((int) PacketType.START_INFO, id, serverChannel);
+                    SendAck((int) PacketType.START_INFO, id);
                 }
             }
 
@@ -204,14 +205,14 @@ public class SimulationClient
         }
     }
 
-    private void SendAck(int packetType, int playerId, Channel serverChannel)
+    private void SendAck(int packetType, int playerId)
     {
         var packet = Packet.Obtain();
         packet.buffer.PutInt(packetType);
         packet.buffer.PutInt(id);
         packet.buffer.PutInt(playerId);
         packet.buffer.Flush();
-        serverChannel.Send(packet, serverEndPoint);
+        channel.Send(packet, serverEndPoint);
         packet.Free();    
     }
 
@@ -287,16 +288,16 @@ public class SimulationClient
         }
     }
 
-    public void ClientFixedUpdate(Channel serverChannel)
+    public void ClientFixedUpdate()
     {
         if (isPlaying)
         {
-            SendInputToServer(serverChannel);
-            CheckForGameEvents(serverChannel);
+            SendInputToServer();
+            CheckForGameEvents();
         }
     }
     
-    private void SendInputToServer(Channel serverChannel)
+    private void SendInputToServer()
     {
         var packet = Packet.Obtain();
         
@@ -319,34 +320,34 @@ public class SimulationClient
         packet.buffer.PutInt(lastInputRemoved + 1);
         GameInput.Serialize(sentInputs, lastInputSent, packet.buffer);
         packet.buffer.Flush();
-        serverChannel.Send(packet, serverEndPoint);
+        channel.Send(packet, serverEndPoint);
         packet.Free();
         // lastClientInput - lastInputSent because it can send one or two inputs depending on rotation
         lastInputSent += (lastClientInput - lastInputSent) + actionInputsize;
     }
 
-    private void CheckForGameEvents(Channel serverChannel)
+    private void CheckForGameEvents()
     {
         GameEvent currentEvent = GetGameEvent();
         if (currentEvent != null)
         {
-            SendEventToServer(serverChannel, currentEvent);
+            SendEventToServer(currentEvent);
         }
-        ResendAndDeleteEvent(serverChannel);
+        ResendAndDeleteEvent();
     }
 
-    private void SendEventToServer(Channel serverChannel, GameEvent currentEvent)
+    private void SendEventToServer(GameEvent currentEvent)
     {
         var packet = Packet.Obtain();
         sentEvents.Add(currentEvent);
         currentEvent.Serialize(packet.buffer, id);
         packet.buffer.Flush();
-        serverChannel.Send(packet, serverEndPoint);
+        channel.Send(packet, serverEndPoint);
         packet.Free();
         
     }
 
-    private void ResendAndDeleteEvent(Channel serverChannel)
+    private void ResendAndDeleteEvent()
     {
         if (sentEvents.Count > 0)
         {
@@ -356,7 +357,7 @@ public class SimulationClient
                 sentEvents.RemoveAt(0);
                 eventNumber++;
                 GameEvent newEvent = new GameEvent(firstEvent.name, firstEvent.value, clientTime, eventNumber);
-                SendEventToServer(serverChannel, newEvent);
+                SendEventToServer(newEvent);
                 firstEvent = sentEvents.Count > 0 ? sentEvents[0] : null;
             }
         }
