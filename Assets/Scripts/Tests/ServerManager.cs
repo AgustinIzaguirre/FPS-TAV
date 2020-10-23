@@ -33,7 +33,6 @@ public class ServerManager : MonoBehaviour
             sentJoinEvents = new List<JoinEvent>();
             lastClientId = 0;
             server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
-            GameConfig.SetServerChannel(server.GetChannel());
             Application.targetFrameRate = 60;
             time = 0f;
         }

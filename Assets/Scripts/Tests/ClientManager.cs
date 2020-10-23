@@ -30,7 +30,7 @@ public class ClientManager : MonoBehaviour
             timeToSend = (float) 1 / (float) packetsPerSecond;
             timeoutForEvents = 1f;
             serverEndPoint = GameConfig.GetServerEndPoint();
-            serverChannel = GameConfig.GetServerChannel();
+            serverChannel = new Channel(GameConfig.GetServerPort());
             sentJoinEvents = new List<JoinEvent>();
             Application.targetFrameRate = 60;
             time = 0f;

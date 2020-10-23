@@ -7,7 +7,6 @@ public class GameConfig
     private static String serverAddress = null;
     private static GameMode gameMode = GameMode.BOTH;
     private static IPEndPoint serverEndPoint = null;
-    private static Channel serverChannel = null;
     private static int playerQuantity = 0;
 
     public static void ConfigureGame(int serverPort, String serverAddress, GameMode gameMode)
@@ -32,16 +31,7 @@ public class GameConfig
     {
         return serverEndPoint;
     }
-
-    public static Channel GetServerChannel()
-    {
-        return serverChannel;
-    }
-
-    public static void SetServerChannel(Channel serverChannel)
-    {
-        GameConfig.serverChannel = serverChannel;
-    }
+    
     public static GameMode GetGameMode()
     {
         return gameMode;
