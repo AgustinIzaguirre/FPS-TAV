@@ -70,7 +70,7 @@ public class ClientManager : MonoBehaviour
         // Add base player
         int clientId = 1 + GameConfig.GetPlayerQuantity();
         GameConfig.IncrementPlayerQuantity();
-        int portNumber = clientId + 9000;
+        int portNumber = clientId + 9000 + 10;
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
             serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
         this.client = client;

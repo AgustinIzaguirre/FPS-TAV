@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.50633776, g: 0.58082086, b: 0.6428098, a: 1}
+  m_IndirectSpecularColor: {r: 0.51280123, g: 0.5859485, b: 0.6443603, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &4
 LightmapSettings:
@@ -719,9 +719,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa8c231a646304ed28495db59733aa39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientPrefab: {fileID: 0}
-  simulationPrefab: {fileID: 0}
-  enemyPrefab: {fileID: 0}
+  clientPrefab: {fileID: 7709701246299018464, guid: 84e162c91c4354ac98eaf4943548c34a,
+    type: 3}
+  simulationPrefab: {fileID: 2940356322965701842, guid: e4ddd54a8f2134037bfabd50912a0009,
+    type: 3}
+  enemyPrefab: {fileID: 2940356322965701842, guid: 4965ba5fd77cd498281e2928bffc754d,
+    type: 3}
   minSnapshots: 3
   timeoutForEvents: 0
 --- !u!1 &45716518
@@ -13216,7 +13219,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 178ac02c07a834854bc7c4028c78b1f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverPrefab: {fileID: 0}
+  serverPrefab: {fileID: 2703948289432927360, guid: 02ed2b4eb3a814cd3b8d91aba617b81e,
+    type: 3}
   minSnapshots: 3
   timeoutForEvents: 0
   gameMode: 2
