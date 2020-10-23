@@ -19,7 +19,7 @@ public class ServerManager : MonoBehaviour
     private int lastClientId;
     private float time;
     private IPEndPoint serverEndPoint;
-    public GameMode gameMode = GameMode.BOTH;
+    private GameMode gameMode;
 
     void Start()
     {
