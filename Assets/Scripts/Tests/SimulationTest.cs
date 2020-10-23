@@ -77,7 +77,10 @@ public class SimulationTest : MonoBehaviour
                 connected = !connected;
             }
 
-            server.UpdateServer();
+            if (connected)
+            {
+                server.UpdateServer();
+            }
 
             CheckIfClientJoined();
 
