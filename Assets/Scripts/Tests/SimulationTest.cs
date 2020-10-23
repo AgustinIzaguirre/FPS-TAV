@@ -135,9 +135,6 @@ public class SimulationTest : MonoBehaviour
                 if (clientId == 1)
                 {
                     currentClient.id = clientId;
-                    CubeEntity clientCube = new CubeEntity(clientPrefab);
-//                    clientCube.Deserialize(packet.buffer);
-//                    currentClient.Spawn(clientCube);
                 }
 //                else
 //                {

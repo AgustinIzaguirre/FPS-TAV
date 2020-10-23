@@ -14,7 +14,7 @@ public class ClientManager : MonoBehaviour
     public int minSnapshots = 3;
     public float timeoutForEvents;
     private float timeToSend;
-    private Dictionary<int, SimulationClient> clients;
+    private SimulationClient client;
     private List<JoinEvent> sentJoinEvents;
     private float time;
     private IPEndPoint serverEndPoint;
@@ -31,21 +31,19 @@ public class ClientManager : MonoBehaviour
             timeoutForEvents = 1f;
             serverEndPoint = GameConfig.GetServerEndPoint();
             serverChannel = GameConfig.GetServerChannel();
-            clients = new Dictionary<int, SimulationClient>();
             sentJoinEvents = new List<JoinEvent>();
             Application.targetFrameRate = 60;
             time = 0f;
             Cursor.lockState = CursorLockMode.Locked;
+            RequestJoin();
         }
     }
 
     private void OnDestroy() {
         if (gameMode == GameMode.CLIENT)
         {
-            foreach (var client in clients.Values)
-            {
-                client.DestroyChannel();
-            }
+            client.DestroyChannel();
+            
         }
     }
 
@@ -53,10 +51,7 @@ public class ClientManager : MonoBehaviour
     {
         if (gameMode == GameMode.CLIENT)
         {
-            if (clients.Count > 0)
-            {
-                clients[1].ClientFixedUpdate(serverChannel);
-            }
+            client.ClientFixedUpdate(serverChannel);
         }
     }
 
@@ -65,12 +60,91 @@ public class ClientManager : MonoBehaviour
         if (gameMode == GameMode.CLIENT)
         {
             time += Time.deltaTime;
-//            CheckIfClientJoined();
+            CheckIfClientJoined();
+            client.UpdateClient(serverChannel);
+        }
+    }
 
-            foreach (var client in clients.Values)
+    private void RequestJoin()
+    {
+        // Add base player
+        int clientId = 1 + GameConfig.GetPlayerQuantity();
+        GameConfig.IncrementPlayerQuantity();
+        int portNumber = clientId + 9000;
+        SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
+            serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
+        this.client = client;
+        SendPlayerJoinEvent(clientId);
+    }
+    
+    private void SendPlayerJoinEvent(int clientId)
+    {
+        Packet packet = Packet.Obtain();
+        packet.buffer.PutInt((int) PacketType.JOIN_GAME);
+        packet.buffer.PutInt(clientId);
+        packet.buffer.Flush();
+        client.GetChannel().Send(packet, serverEndPoint);
+        packet.Free();
+        sentJoinEvents.Add(new JoinEvent(clientId, time));
+    }
+
+    private void ResendJoinEvents()
+    {
+        while (sentJoinEvents.Count > 0 && (time - sentJoinEvents[0].time) > timeoutForEvents)
+        {
+            JoinEvent currentEvent = sentJoinEvents[0];
+            sentJoinEvents.RemoveAt(0);
+            SendPlayerJoinEvent(currentEvent.clientId);
+        }
+    }
+    
+    private void CheckIfClientJoined()
+    {
+        ReceiveJoinEventResponses();
+        ResendJoinEvents();
+    }
+
+    private void ReceiveJoinEventResponses()
+    {
+        bool receivedResponse = false;
+        for (int i = 0; i < sentJoinEvents.Count && !receivedResponse; i++)
+        {
+            if (ReceiveClientJoinResponse(client))
             {
-                client.UpdateClient(serverChannel);
+                receivedResponse = true;
             }
         }
+
+        if (receivedResponse)
+        {
+            sentJoinEvents.Clear();
+        }
+    }
+
+    private bool ReceiveClientJoinResponse(SimulationClient currentClient)
+    {
+        Channel clientChannel = currentClient.GetChannel();
+        var packet = clientChannel.GetPacket();
+        bool receivedPacket = false;
+        while (packet != null)
+        {
+            int packetType = packet.buffer.GetInt();
+            if (packetType == (int) PacketType.JOIN_GAME)
+            {
+                int clientId = packet.buffer.GetInt();
+                if (clientId == 1)
+                {
+                    currentClient.id = clientId;
+                }
+                receivedPacket = true;
+            }
+            packet.Free();
+            if (receivedPacket)
+            {
+                return true;
+            }
+            packet = clientChannel.GetPacket();
+        }
+        return false;
     }
 }

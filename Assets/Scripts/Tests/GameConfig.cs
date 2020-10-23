@@ -8,6 +8,7 @@ public class GameConfig
     private static GameMode gameMode = GameMode.BOTH;
     private static IPEndPoint serverEndPoint = null;
     private static Channel serverChannel = null;
+    private static int playerQuantity = 0;
 
     public static void ConfigureGame(int serverPort, String serverAddress, GameMode gameMode)
     {
@@ -44,5 +45,15 @@ public class GameConfig
     public static GameMode GetGameMode()
     {
         return gameMode;
+    }
+
+    public static int GetPlayerQuantity()
+    {
+        return playerQuantity;
+    }
+
+    public static void IncrementPlayerQuantity()
+    {
+        playerQuantity++;
     }
 }
