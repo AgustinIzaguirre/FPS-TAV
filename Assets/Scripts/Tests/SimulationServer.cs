@@ -191,13 +191,13 @@ public class SimulationServer
                 if (clientId == playerId && !activePlayers[clientId])
                 {
                     SendStartInfo(clientId);
-                    // sendNewWorldInfo and wait ack then activate player TODO remove i think
                 }
             }
             else if (packetType == (int) PacketType.START_INFO)
             {
                 int clientId = packet.buffer.GetInt();
                 activePlayers[clientId] = true;
+                Debug.Log("Activate player " + clientId);
                 int removeIndex = -1;
                 for (int i = 0; i < startInfoSent.Count; i++)
                 {

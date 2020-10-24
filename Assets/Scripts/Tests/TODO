@@ -34,3 +34,4 @@ A considerar capaz conviene.
 * Ajustar el collider del character controller al modelo que use
 * Chequear que un mismo cliente no se conecte mas de una vez
 * Mirar el sequence si es incremental por cliente o uno por cada worldInfo y despues mirar como se usa del lado del cliente
+* Hacer que no se pueda conectar varias veces un mismo cliente(guardar los endpoints de los clientes)
