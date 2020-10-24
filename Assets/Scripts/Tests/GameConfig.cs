@@ -32,11 +32,23 @@ public class GameConfig
         return serverEndPoint;
     }
     
+    public static IPEndPoint SetServerEndPoint(String serverAddress, int serverPort)
+    {
+        GameConfig.serverPort = serverPort;
+        GameConfig.serverAddress = serverAddress;
+        serverEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), serverPort);
+        return serverEndPoint;
+    }
     public static GameMode GetGameMode()
     {
         return gameMode;
     }
 
+    public static void SetGameMode(GameMode gameMode)
+    {
+        GameConfig.gameMode = gameMode;
+    }
+    
     public static int GetPlayerQuantity()
     {
         return playerQuantity;
