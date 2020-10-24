@@ -22,56 +22,72 @@ public class SimulationTest : MonoBehaviour
     private int lastClientId;
     private float time;
     private IPEndPoint serverEndPoint;
+    public GameMode gameMode = GameMode.BOTH;
 
     void Start()
     {
-        timeToSend = (float)1 / (float)packetsPerSecond;
-        timeoutForEvents = 1f;
-        serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
-        clients = new Dictionary<int, SimulationClient>();
-        sentJoinEvents = new List<JoinEvent>();
-        lastClientId = 0;
-        server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
-        Application.targetFrameRate = 60;
-        time = 0f;
-        Cursor.lockState = CursorLockMode.Locked;
+        gameMode = GameConfig.GetGameMode();
+        if (gameMode == GameMode.BOTH)
+        {
+            timeToSend = (float) 1 / (float) packetsPerSecond;
+            timeoutForEvents = 1f;
+            serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
+            clients = new Dictionary<int, SimulationClient>();
+            sentJoinEvents = new List<JoinEvent>();
+            lastClientId = 0;
+            server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
+            Application.targetFrameRate = 60;
+            time = 0f;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
     }
 
     private void OnDestroy() {
-        foreach(var client in clients.Values)
+        if (gameMode == GameMode.BOTH)
         {
-            client.DestroyChannel();
+            foreach (var client in clients.Values)
+            {
+                client.DestroyChannel();
+            }
+
+            server.DestroyChannel();
         }
-        server.DestroyChannel();
     }
 
     private void FixedUpdate()
     {
-        if (clients.Count > 0)
+        if (gameMode == GameMode.BOTH)
         {
-            clients[1].ClientFixedUpdate(server.GetChannel());
+            if (clients.Count > 0)
+            {
+                clients[1].ClientFixedUpdate();
+            }
+
+            server.ServerFixedUpdate();
         }
-        server.ServerFixedUpdate();
     }
 
     void Update()
     {
-        time += Time.deltaTime;
-        if (Input.GetKeyDown(KeyCode.C))
+        if (gameMode == GameMode.BOTH)
         {
-            connected = !connected;
-        }
+            time += Time.deltaTime;
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                connected = !connected;
+            }
 
-        if (connected)
-        {
-            server.UpdateServer();
-        }
+            if (connected)
+            {
+                server.UpdateServer();
+            }
 
-        CheckIfClientJoined();
-        
-        foreach(var client in clients.Values)
-        {
-            client.UpdateClient(server.GetChannel());
+            CheckIfClientJoined();
+
+            foreach (var client in clients.Values)
+            {
+                client.UpdateClient();
+            }
         }
     }
 
@@ -119,9 +135,6 @@ public class SimulationTest : MonoBehaviour
                 if (clientId == 1)
                 {
                     currentClient.id = clientId;
-                    CubeEntity clientCube = new CubeEntity(clientPrefab);
-//                    clientCube.Deserialize(packet.buffer);
-//                    currentClient.Spawn(clientCube);
                 }
 //                else
 //                {

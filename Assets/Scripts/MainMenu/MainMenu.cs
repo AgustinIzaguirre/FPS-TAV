@@ -1,34 +1,56 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public String gameScene;
+    public GameObject inputModal; 
+    private int serverPort;
+    private String serverAddress;
+    
     void Start()
     {
-        
+        serverPort = 9000;
+        serverAddress = "127.0.0.1";
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void HostGame()
     {
-        Debug.Log("Host game not implemented yet");
+        GameConfig.SetGameMode(GameMode.SERVER);
+        OpenInputModal();
+//        GameConfig.ConfigureGame(serverPort, serverAddress, GameMode.SERVER);
+//        SceneManager.LoadScene(gameScene);
     }
 
     public void JoinGame()
     {
-        Debug.Log("Join game not implemented yet");
+        GameConfig.SetGameMode(GameMode.CLIENT);
+//        GameConfig.ConfigureGame(serverPort,serverAddress, GameMode.CLIENT);
+//        SceneManager.LoadScene(gameScene);
+        inputModal.SetActive(true);
     }
 
     public void QuitGame()
     {
         Debug.Log("Quit Game");
         Application.Quit();
+    }
+    
+    private void OpenInputModal()
+    {
+        inputModal.SetActive(true);
+    }
+    
+    public void CloseInputModal()
+    {
+        inputModal.SetActive(false);
+    }
+
+    public void LoadGame()
+    {
+        SceneManager.LoadScene(gameScene);
     }
 }
