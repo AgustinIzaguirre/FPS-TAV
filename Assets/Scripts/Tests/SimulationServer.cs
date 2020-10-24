@@ -162,6 +162,7 @@ public class SimulationServer
             {
                 int clientId = packet.buffer.GetInt();
                 clientId = lastClientId + 1;
+                Debug.Log("player " + clientId + " joining game");
                 lastClientId += 1;
                 var clientEndPoint = packet.fromEndPoint;
                 if (!clients.ContainsKey(clientId))

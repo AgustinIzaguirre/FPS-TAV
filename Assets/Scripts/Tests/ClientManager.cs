@@ -19,6 +19,8 @@ public class ClientManager : MonoBehaviour
     private float time;
     private IPEndPoint serverEndPoint;
     private GameMode gameMode;
+    private System.Random random;
+
     
 
     void Start()
@@ -33,6 +35,7 @@ public class ClientManager : MonoBehaviour
             Application.targetFrameRate = 60;
             time = 0f;
             Cursor.lockState = CursorLockMode.Locked;
+            random = new System.Random();
             RequestJoin();
         }
     }
@@ -68,7 +71,7 @@ public class ClientManager : MonoBehaviour
         // Add base player
         int clientId = 1 + GameConfig.GetPlayerQuantity();
         GameConfig.IncrementPlayerQuantity();
-        int portNumber = clientId + 9000 + 10;
+        int portNumber = clientId + 9000 + random.Next(0, 500);
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
             serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
         this.client = client;

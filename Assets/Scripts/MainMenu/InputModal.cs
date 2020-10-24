@@ -16,9 +16,11 @@ public class InputModal : MonoBehaviour
 
     private String serverAddress;
     private int serverPort;
+    private int minServerPort = 1024;
+    private int maxServerPort = 49151;
 
     
-    public bool ValidateServerAddress()
+    private bool ValidateServerAddress()
     {
         Debug.Log(serverAddressField.text);
         string addressRegex = @"(^[0-9]{1,4}(.)[0-9]{1,4}(.)[0-9]{1,4}(.)[0-9]{1,4}$)";
@@ -28,29 +30,27 @@ public class InputModal : MonoBehaviour
             serverAddress = serverAddressField.text;
             return true;
         }
-        else
-        {
-            addressError.SetActive(true);
-            return false;
-        }
-            
+        addressError.SetActive(true);
+        return false;
     }
 
-    public bool ValidateServerPort()
+    private bool ValidateServerPort()
     {
         string portRegex = @"(^[0-9]{1,5}$)";
         Regex re = new Regex(portRegex);
         if (re.IsMatch(serverPortField.text))
         {
-//            int serverPort = serverPortField.text;
-            return true;
+            serverPort = int.Parse(serverPortField.text);
+            Debug.Log(serverPort);
+            if (serverPort >= minServerPort && serverPort <= maxServerPort)
+            {
+                return true;    
+            }
+            
         }
-        else
-        {
-            Debug.Log("Port no matchea"); 
-            portError.SetActive(true);
-            return false;
-        }
+        Debug.Log("Port no matchea"); 
+        portError.SetActive(true);
+        return false;
     }
 
     public void ValidateFields()
