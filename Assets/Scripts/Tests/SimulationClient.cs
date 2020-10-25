@@ -277,6 +277,10 @@ public class SimulationClient
     private void GetUserActionInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
+        if (Input.GetMouseButton(0))
+        {
+            Shoot();  
+        }
         if (Input.GetKeyDown(KeyCode.Space))
         {
             jump = true;
@@ -473,5 +477,17 @@ public class SimulationClient
         Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
         GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
         players[playerId] = player;
+    }
+
+    public void Shoot()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
+        {
+            if (hit.transform.name.Contains("Enemy"))
+            {
+                Debug.Log("Hit Enemy");
+            }
+        }
     }
 }

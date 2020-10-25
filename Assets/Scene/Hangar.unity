@@ -13223,7 +13223,6 @@ MonoBehaviour:
     type: 3}
   minSnapshots: 3
   timeoutForEvents: 0
-  gameMode: 2
 --- !u!1 &720477825
 GameObject:
   m_ObjectHideFlags: 0
