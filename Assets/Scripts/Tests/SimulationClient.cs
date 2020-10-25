@@ -483,6 +483,7 @@ public class SimulationClient
 
     public void Shoot()
     {
+        playerCamera.GetComponent<AudioSource>().Play();
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
         {
