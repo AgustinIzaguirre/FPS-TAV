@@ -476,6 +476,8 @@ public class SimulationClient
         Vector3 position = playerCube.position;
         Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
         GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
+        EnemyInfo enemyInfo = player.GetComponent<EnemyInfo>();
+        enemyInfo.SetId(playerId);
         players[playerId] = player;
     }
 
@@ -486,7 +488,7 @@ public class SimulationClient
         {
             if (hit.transform.name.Contains("Enemy"))
             {
-                Debug.Log("Hit Enemy");
+                Debug.Log(hit.transform.GetComponent<EnemyInfo>().GetId());
             }
         }
     }
