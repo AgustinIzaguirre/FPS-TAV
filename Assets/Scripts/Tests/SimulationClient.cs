@@ -484,6 +484,8 @@ public class SimulationClient
     public void Shoot()
     {
         playerCamera.GetComponent<AudioSource>().Play();
+        playerCamera.GetComponent<MuzzleFlash>().PlayMuzzleFlash(); //TODO improve particle system position
+
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
         {
