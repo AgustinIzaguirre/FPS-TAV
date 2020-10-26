@@ -35,3 +35,5 @@ A considerar capaz conviene.
 * Chequear que un mismo cliente no se conecte mas de una vez
 * Mirar el sequence si es incremental por cliente o uno por cada worldInfo y despues mirar como se usa del lado del cliente
 * Hacer que no se pueda conectar varias veces un mismo cliente(guardar los endpoints de los clientes)
+* TODO refactor worldInfo, agregando una nueva clase que tenga toda la info del jugador a su vex renombrar todo lo que
+dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo
