@@ -277,6 +277,10 @@ public class SimulationClient
     private void GetUserActionInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
+        if (Input.GetMouseButton(0))
+        {
+            Shoot();  
+        }
         if (Input.GetKeyDown(KeyCode.Space))
         {
             jump = true;
@@ -472,6 +476,23 @@ public class SimulationClient
         Vector3 position = playerCube.position;
         Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
         GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
+        EnemyInfo enemyInfo = player.GetComponent<EnemyInfo>();
+        enemyInfo.SetId(playerId);
         players[playerId] = player;
+    }
+
+    public void Shoot()
+    {
+        playerCamera.GetComponent<AudioSource>().Play();
+        playerCamera.GetComponent<MuzzleFlash>().PlayMuzzleFlash(); //TODO improve particle system position
+
+        RaycastHit hit;
+        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
+        {
+            if (hit.transform.name.Contains("Enemy"))
+            {
+                Debug.Log(hit.transform.GetComponent<EnemyInfo>().GetId());
+            }
+        }
     }
 }
