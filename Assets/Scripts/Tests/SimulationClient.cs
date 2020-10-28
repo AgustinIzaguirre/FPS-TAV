@@ -93,6 +93,7 @@ public class SimulationClient
                 {
                     Snapshot currentSnapshot = new Snapshot();
                     currentSnapshot.Deserialize(packet.buffer);
+                    // TODO seems to be failing when trying to get key from snapshot
                     int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
                     AddToInterpolationBuffer(currentSnapshot);
                     if (render)
@@ -143,8 +144,11 @@ public class SimulationClient
                 int playerId = newPlayerEvent.playerId;
                 if (!players.ContainsKey(playerId))
                 {
-                    if (id == 1)
+                    Debug.Log("New player: " + playerId);
+
+                    if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
                     {
+                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
                         if (id == playerId)
                         {
                             Spawn(newPlayerEvent.newPlayer);
@@ -159,6 +163,7 @@ public class SimulationClient
             }
             if (packetType == (int) PacketType.START_INFO)
             {
+                Debug.Log("Receive Start Info");
                 if (isSpawned)
                 {
                     WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);

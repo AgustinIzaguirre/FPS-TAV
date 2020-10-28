@@ -196,6 +196,7 @@ public class SimulationServer
             else if (packetType == (int) PacketType.START_INFO)
             {
                 int clientId = packet.buffer.GetInt();
+                Debug.Log("Recieve Start info ACK from client: " + clientId);
                 activePlayers[clientId] = true;
                 Debug.Log("Activate player " + clientId);
                 int removeIndex = -1;
