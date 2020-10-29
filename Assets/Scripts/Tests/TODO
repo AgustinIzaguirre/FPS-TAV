@@ -37,3 +37,4 @@ A considerar capaz conviene.
 * Hacer que no se pueda conectar varias veces un mismo cliente(guardar los endpoints de los clientes)
 * TODO refactor worldInfo, agregando una nueva clase que tenga toda la info del jugador a su vex renombrar todo lo que
 dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo
+* TODO un bool de esta disparando o no el jugador para mostrar la animacion

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public class WorldInfo
 {
@@ -29,6 +30,7 @@ public class WorldInfo
         foreach (var playerId in players.Keys)
         {
             buffer.PutInt(playerId);
+            Debug.Log("Serializing playerId = " + playerId);
             buffer.PutInt(playerAppliedInputs[playerId]);
             players[playerId].Serialize(buffer);
         }
