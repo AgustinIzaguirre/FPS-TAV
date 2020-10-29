@@ -75,6 +75,7 @@ public class ClientManager : MonoBehaviour
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
             serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
         this.client = client;
+        Debug.Log("Sending join event");
         SendPlayerJoinEvent(clientId);
     }
     
@@ -133,9 +134,12 @@ public class ClientManager : MonoBehaviour
             if (packetType == (int) PacketType.JOIN_GAME)
             {
                 int clientId = packet.buffer.GetInt();
-                if (clientId == 1)
+                Debug.Log("Client id set by server = " + clientId);
+                if (currentClient.id == 1)
                 {
                     currentClient.id = clientId;
+                    Debug.Log("CurrentClient id = " + currentClient.id);
+
                 }
                 receivedPacket = true;
             }

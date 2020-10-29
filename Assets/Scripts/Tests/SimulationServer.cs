@@ -81,6 +81,7 @@ public class SimulationServer
          
          foreach (var clientId in clients.Keys)
          {
+//             Debug.Log("Sending world info to client= " + clientId);
              //serialize
              var packet = Packet.Obtain();
              sequence++;
@@ -97,9 +98,14 @@ public class SimulationServer
          WorldInfo currentWorldInfo = new WorldInfo();
          foreach (var clientId in clientsCubes.Keys)
          {
+//             Debug.Log("Sending snapshot for client = " + clientId);
              float clientVelocity = clientsCubes[clientId].GetComponent<GravityController>().GetVerticalVelocity();
              CubeEntity clientEntity = new CubeEntity(clientsCubes[clientId], clientVelocity);
              currentWorldInfo.AddPlayer(clientId, clientEntity, clients[clientId].lastInputApplied);
+             if (clientId == 2)
+             {
+                 Debug.Log("Client lastInput on server = " + currentWorldInfo.playerAppliedInputs[clientId]);
+             }
          }
 
          return currentWorldInfo;
@@ -145,6 +151,10 @@ public class SimulationServer
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
                     currentClient.lastInputApplied = ackNumber;
+                    if (clientId == 2)
+                    {
+                        Debug.Log("client = " + clientId + " last input applied = " + currentClient.lastInputApplied);
+                    }
                 }
             }
             else if (packetType == (int) PacketType.EVENT)
@@ -171,6 +181,7 @@ public class SimulationServer
                     inputsToApply[clientId] = new List<GameInput>();
                     SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
                     GenerateNewPlayer(clientId);
+                    Debug.Log("Deactivate client = " + clientId);
                     activePlayers[clientId] = false;
                 }
             }
@@ -196,6 +207,7 @@ public class SimulationServer
             else if (packetType == (int) PacketType.START_INFO)
             {
                 int clientId = packet.buffer.GetInt();
+                Debug.Log("Recieve Start info ACK from client: " + clientId);
                 activePlayers[clientId] = true;
                 Debug.Log("Activate player " + clientId);
                 int removeIndex = -1;

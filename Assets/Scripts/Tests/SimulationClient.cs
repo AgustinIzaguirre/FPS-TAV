@@ -93,25 +93,30 @@ public class SimulationClient
                 {
                     Snapshot currentSnapshot = new Snapshot();
                     currentSnapshot.Deserialize(packet.buffer);
-                    int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
-                    AddToInterpolationBuffer(currentSnapshot);
-                    if (render)
-                    {
-                        Interpolate();
-
-                        CalculatePrediction(currentSnapshot.worldInfo.players[id]);
-                        CubeEntity predictionEntity = new CubeEntity(playerPrediction);
-                        CubeEntity playerEntity = new CubeEntity(players[id]);
-                        RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
-                        lastServerInput = lastInput;
-                        if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+                    // TODO seems to be failing when trying to get key from snapshot
+//                    if (currentSnapshot.worldInfo.playerAppliedInputs.ContainsKey(id))
+//                    {
+                        Debug.Log("Receiving snapshot");
+                        int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
+                        AddToInterpolationBuffer(currentSnapshot);
+                        if (render)
                         {
-                            Debug.Log("Not equals");
-                            players[id].transform.position = playerPrediction.transform.position;
+                            Interpolate();
+
+                            CalculatePrediction(currentSnapshot.worldInfo.players[id]);
+                            CubeEntity predictionEntity = new CubeEntity(playerPrediction);
+                            CubeEntity playerEntity = new CubeEntity(players[id]);
+                            RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
+                            lastServerInput = lastInput;
+                            if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+                            {
+                                Debug.Log("Not equals");
+                                players[id].transform.position = playerPrediction.transform.position;
 //                            players[id].transform.rotation = playerPrediction.transform.rotation;
+                            }
+
                         }
-                    
-                    }
+//                    }
                 }
                 else if (packetType == (int) PacketType.ACK)
                 {
@@ -143,8 +148,11 @@ public class SimulationClient
                 int playerId = newPlayerEvent.playerId;
                 if (!players.ContainsKey(playerId))
                 {
-                    if (id == 1)
+                    Debug.Log("New player: " + playerId);
+
+                    if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
                     {
+                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
                         if (id == playerId)
                         {
                             Spawn(newPlayerEvent.newPlayer);
@@ -159,6 +167,7 @@ public class SimulationClient
             }
             if (packetType == (int) PacketType.START_INFO)
             {
+                Debug.Log("Receive Start Info");
                 if (isSpawned)
                 {
                     WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
@@ -191,6 +200,7 @@ public class SimulationClient
 
     private void CalculatePrediction(CubeEntity serverPlayer)
     {
+        Debug.Log("Calculating prediction");
         playerPrediction.transform.position = serverPlayer.position;
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
         int quantity = lastClientInput - lastServerInput;

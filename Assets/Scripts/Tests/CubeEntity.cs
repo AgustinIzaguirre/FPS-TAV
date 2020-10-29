@@ -67,6 +67,7 @@ public class CubeEntity
         newCubeEntity.eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
         newCubeEntity.eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
         newCubeEntity.eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
+        newCubeEntity.verticalVelocity = buffer.GetFloat();
         return newCubeEntity;
     }
     

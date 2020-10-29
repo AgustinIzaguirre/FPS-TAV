@@ -84,11 +84,13 @@ public class BitBuffer {
 	}
 
 	public void PutInt(int value) {
+//		PutString("" + value);
 		PutBits(value, int.MinValue, int.MaxValue);
 	}
 
 	public void PutInt(int value, int minValue, int maxValue)
 	{
+//		PutString("" + value);
 		PutBits(value, minValue, maxValue);
 	}
 	
@@ -189,12 +191,15 @@ public class BitBuffer {
 		return (int)GetBits(sbyte.MinValue, sbyte.MaxValue);
 	}
 
-	public int GetInt() {
+	public int GetInt()
+	{
+//		return int.Parse(GetString());
 		return (int)GetBits(int.MinValue, int.MaxValue);
 	}
 
 	public int GetInt(int minValue, int maxValue)
 	{
+//		return int.Parse(GetString());
 		return (int) GetBits(minValue, maxValue);
 	}
 
