@@ -10,12 +10,7 @@ using Debug = UnityEngine.Debug;
 public class SimulationServer
 {
     private GameObject serverPrefab;
-    private Dictionary<int, GameObject> clientsCubes;
-    private Dictionary<int, ClientInfo> clients;
-    
-    
-    private Dictionary<int, bool> activePlayers;
-    
+    private Dictionary<int, PlayerInfo> players;
     private Dictionary<int, List<GameInput>> inputsToApply;
     private Channel channel;
     private float timeToSend;
@@ -30,9 +25,7 @@ public class SimulationServer
     public SimulationServer(IPEndPoint endPoint, float timeToSend, GameObject serverPrefab)
     {
         channel = new Channel(endPoint.Port);
-        clientsCubes = new Dictionary<int, GameObject>();
-        clients = new Dictionary<int, ClientInfo>();
-        activePlayers = new Dictionary<int, bool>();
+        players = new Dictionary<int, PlayerInfo>();
         inputsToApply = new Dictionary<int, List<GameInput>>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
@@ -82,7 +75,7 @@ public class SimulationServer
      {
          WorldInfo currentWorldInfo = GenerateCurrentWorldInfo();
          
-         foreach (var clientId in clients.Keys)
+         foreach (var clientId in players.Keys)
          {
 //             Debug.Log("Sending world info to client= " + clientId);
              //serialize
@@ -91,7 +84,7 @@ public class SimulationServer
              Snapshot currentSnapshot = new Snapshot(sequence, currentWorldInfo);
              currentSnapshot.Serialize(packet.buffer);
              packet.buffer.Flush();
-             channel.Send(packet, clients[clientId].endPoint);
+             channel.Send(packet, players[clientId].endPoint);
              packet.Free();
          }   
      }
@@ -99,12 +92,12 @@ public class SimulationServer
      private WorldInfo GenerateCurrentWorldInfo()
      {
          WorldInfo currentWorldInfo = new WorldInfo();
-         foreach (var clientId in clientsCubes.Keys)
+         foreach (var clientId in players.Keys)
          {
 //             Debug.Log("Sending snapshot for client = " + clientId);
-             float clientVelocity = clientsCubes[clientId].GetComponent<GravityController>().GetVerticalVelocity();
-             PlayerEntity clientEntity = new PlayerEntity(clientsCubes[clientId], clientVelocity);
-             currentWorldInfo.AddPlayer(clientId, clientEntity, clients[clientId].lastInputApplied);
+             float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>().GetVerticalVelocity();
+             PlayerEntity clientEntity = new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity);
+             currentWorldInfo.AddPlayer(clientId, clientEntity, players[clientId].lastInputApplied);
              if (clientId == 2)
              {
                  Debug.Log("Client lastInput on server = " + currentWorldInfo.playerAppliedInputs[clientId]);
@@ -116,12 +109,13 @@ public class SimulationServer
 
      public void ServerFixedUpdate()
      {
-         foreach (var clientId in clients.Keys)
+         foreach (var clientId in players.Keys)
          {
-             Transform clientTransform = clientsCubes[clientId].transform;
+             GameObject playerObject = players[clientId].GetPlayerGameObject();
+             Transform clientTransform = playerObject.transform;
              PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
-                     clientsCubes[clientId].GetComponent<CharacterController>(),
-                     clientsCubes[clientId].GetComponent<GravityController>(), clientTransform);
+                 playerObject.GetComponent<CharacterController>(),
+                 playerObject.GetComponent<GravityController>(), clientTransform);
              inputsToApply[clientId].Clear();
          }
      }
@@ -136,14 +130,14 @@ public class SimulationServer
             if (packetType == (int) PacketType.INPUT)
             {
                 int clientId = packet.buffer.GetInt();
-                if (activePlayers[clientId])
+                if (players[clientId].isActive)
                 {
-                    ClientInfo currentClient = clients[clientId];
+                    PlayerInfo currentPlayer = players[clientId];
                     int startInput = packet.buffer.GetInt();
                     List<GameInput> inputsToExecute = GameInput.Deserialize(packet.buffer);
                     int ackNumber = packet.buffer.GetInt();
-                    SendAck(ackNumber, PacketType.ACK, currentClient.endPoint);
-                    int firstInput = currentClient.lastInputApplied + 1 - startInput;
+                    SendAck(ackNumber, PacketType.ACK, currentPlayer.endPoint);
+                    int firstInput = currentPlayer.lastInputApplied + 1 - startInput;
                     //TODO separate on function
                     if (inputsToApply[clientId] == null)
                     {
@@ -153,10 +147,10 @@ public class SimulationServer
                     {
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
-                    currentClient.lastInputApplied = ackNumber;
+                    currentPlayer.lastInputApplied = ackNumber;
                     if (clientId == 2)
                     {
-                        Debug.Log("client = " + clientId + " last input applied = " + currentClient.lastInputApplied);
+                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
                     }
                 }
             }
@@ -164,9 +158,9 @@ public class SimulationServer
             {
                  // handle event   
                  int clientId = packet.buffer.GetInt();
-                 if (activePlayers[clientId])
+                 if (players[clientId].isActive)
                  {
-                     ClientInfo currentClient = clients[clientId];
+                     PlayerInfo currentClient = players[clientId];
                      GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
                      SendAck(currentEvent.eventNumber, PacketType.EVENT, currentClient.endPoint);
                  }
@@ -178,14 +172,14 @@ public class SimulationServer
                 Debug.Log("player " + clientId + " joining game");
                 lastClientId += 1;
                 var clientEndPoint = packet.fromEndPoint;
-                if (!clients.ContainsKey(clientId))
+                if (!players.ContainsKey(clientId))
                 {
-                    clients[clientId] = new ClientInfo(clientId, clientEndPoint);
+                    players[clientId] = new PlayerInfo(clientId, clientEndPoint);
                     inputsToApply[clientId] = new List<GameInput>();
-                    SendAck(lastClientId, PacketType.JOIN_GAME, clients[clientId].endPoint);
+                    SendAck(lastClientId, PacketType.JOIN_GAME, players[clientId].endPoint);
                     GenerateNewPlayer(clientId);
                     Debug.Log("Deactivate client = " + clientId);
-                    activePlayers[clientId] = false;
+                    players[clientId].DeactivatePlayer();
                 }
             }
             else if (packetType == (int) PacketType.NEW_PLAYER)
@@ -202,7 +196,7 @@ public class SimulationServer
                     }
                 }
                 newPlayerEventSent.RemoveAt(removeIndex);
-                if (clientId == playerId && !activePlayers[clientId])
+                if (clientId == playerId && !players[clientId].isActive)
                 {
                     SendStartInfo(clientId);
                 }
@@ -211,7 +205,7 @@ public class SimulationServer
             {
                 int clientId = packet.buffer.GetInt();
                 Debug.Log("Recieve Start info ACK from client: " + clientId);
-                activePlayers[clientId] = true;
+                players[clientId].ActivatePlayer();
                 Debug.Log("Activate player " + clientId);
                 int removeIndex = -1;
                 for (int i = 0; i < startInfoSent.Count; i++)
@@ -230,7 +224,7 @@ public class SimulationServer
 
      private void SendStartInfo(int destinationId)
      {
-         ClientInfo currentPlayer = clients[destinationId];
+         PlayerInfo currentPlayer = players[destinationId];
          IPEndPoint clientEndpoint = currentPlayer.endPoint;
          var packet = Packet.Obtain();
          packet.buffer.PutInt((int) PacketType.START_INFO);
@@ -244,17 +238,17 @@ public class SimulationServer
      }
 
      private void SendNewPlayerEventToAllPlayers(int playerId, Vector3 position, Vector3 rotation)
-     {
-         PlayerEntity newPlayer = new PlayerEntity(clientsCubes[playerId], position, rotation);
-        foreach (var id in clients.Keys)
-        {
-            SendNewPlayerEvent(playerId, newPlayer, id);
-        }
+     { 
+         PlayerEntity newPlayer = new PlayerEntity(players[playerId].GetPlayerGameObject(), position, rotation);
+         foreach (var id in players.Keys)
+         { 
+             SendNewPlayerEvent(playerId, newPlayer, id); 
+         }
      }
 
      private void SendNewPlayerEvent(int playerId, PlayerEntity newPlayer, int destinationId)
      {
-         ClientInfo currentPlayer = clients[destinationId];
+         PlayerInfo currentPlayer = players[destinationId];
          IPEndPoint clientEndpoint = currentPlayer.endPoint;
          var packet = Packet.Obtain();
          packet.buffer.PutInt((int) PacketType.NEW_PLAYER);
@@ -273,8 +267,8 @@ public class SimulationServer
          float zPosition = Random.Range(-4f, 4f);
          Vector3 position = new Vector3(xPosition, yPosition, zPosition);
          Quaternion rotation = Quaternion.Euler(Vector3.zero);
-         GameObject newCube = GameObject.Instantiate(serverPrefab, position, rotation);
-         clientsCubes[clientId] = newCube;
+         GameObject newPlayer = GameObject.Instantiate(serverPrefab, position, rotation);
+         players[clientId].SetPlayerGameObject(newPlayer);
          SendNewPlayerEventToAllPlayers(clientId, position, rotation.eulerAngles);
      }
 

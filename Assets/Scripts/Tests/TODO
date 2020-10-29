@@ -45,4 +45,4 @@ Animaciones
 cuando agachado sea true.
 
 * En el worldInfo solo tener un diccionario del id a PlayerInfo
-* En el server sacar clientInfo y playerCubes y cambiarlo por un unico PlayerInfo.
+* En el server sacar clientInfo y playerCubes y activePlayers y cambiarlo por un unico PlayerInfo.
