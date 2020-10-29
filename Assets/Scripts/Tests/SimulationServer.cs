@@ -12,7 +12,10 @@ public class SimulationServer
     private GameObject serverPrefab;
     private Dictionary<int, GameObject> clientsCubes;
     private Dictionary<int, ClientInfo> clients;
+    
+    
     private Dictionary<int, bool> activePlayers;
+    
     private Dictionary<int, List<GameInput>> inputsToApply;
     private Channel channel;
     private float timeToSend;
@@ -100,7 +103,7 @@ public class SimulationServer
          {
 //             Debug.Log("Sending snapshot for client = " + clientId);
              float clientVelocity = clientsCubes[clientId].GetComponent<GravityController>().GetVerticalVelocity();
-             CubeEntity clientEntity = new CubeEntity(clientsCubes[clientId], clientVelocity);
+             PlayerEntity clientEntity = new PlayerEntity(clientsCubes[clientId], clientVelocity);
              currentWorldInfo.AddPlayer(clientId, clientEntity, clients[clientId].lastInputApplied);
              if (clientId == 2)
              {
@@ -242,14 +245,14 @@ public class SimulationServer
 
      private void SendNewPlayerEventToAllPlayers(int playerId, Vector3 position, Vector3 rotation)
      {
-        CubeEntity newPlayer = new CubeEntity(clientsCubes[playerId], position, rotation);
+         PlayerEntity newPlayer = new PlayerEntity(clientsCubes[playerId], position, rotation);
         foreach (var id in clients.Keys)
         {
             SendNewPlayerEvent(playerId, newPlayer, id);
         }
      }
 
-     private void SendNewPlayerEvent(int playerId, CubeEntity newPlayer, int destinationId)
+     private void SendNewPlayerEvent(int playerId, PlayerEntity newPlayer, int destinationId)
      {
          ClientInfo currentPlayer = clients[destinationId];
          IPEndPoint clientEndpoint = currentPlayer.endPoint;

@@ -1,10 +1,10 @@
 public class NewPlayerEvent
 {
-    public CubeEntity newPlayer;
+    public PlayerEntity newPlayer;
     public float time;
     public int playerId;
     public int destinationId;
-    public NewPlayerEvent(int playerId, CubeEntity newPlayer, float time, int destinationId)
+    public NewPlayerEvent(int playerId, PlayerEntity newPlayer, float time, int destinationId)
     {
         this.playerId = playerId;
         this.newPlayer = newPlayer;
@@ -23,7 +23,7 @@ public class NewPlayerEvent
     {
         int playerId = buffer.GetInt();
         float time = buffer.GetFloat();
-        CubeEntity player = new CubeEntity(null);
+        PlayerEntity player = new PlayerEntity(null);
         player.Deserialize(buffer);
         return new NewPlayerEvent(playerId, player, time, -1);
     }

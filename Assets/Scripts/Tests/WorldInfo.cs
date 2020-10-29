@@ -3,22 +3,22 @@ using UnityEngine;
 
 public class WorldInfo
 {
-    public Dictionary<int, CubeEntity> players;
+    public Dictionary<int, PlayerEntity> players;
     public Dictionary<int, int> playerAppliedInputs;
 
     public WorldInfo()
     {
-        players = new Dictionary<int, CubeEntity>();
+        players = new Dictionary<int, PlayerEntity>();
         playerAppliedInputs = new Dictionary<int, int>();
     }
 
-    private WorldInfo(Dictionary<int, CubeEntity> players, Dictionary<int, int> playerAppliedInputs)
+    private WorldInfo(Dictionary<int, PlayerEntity> players, Dictionary<int, int> playerAppliedInputs)
     {
         this.players = players;
         this.playerAppliedInputs = playerAppliedInputs;
     }
 
-    public void AddPlayer(int playerId, CubeEntity player, int lastInput)
+    public void AddPlayer(int playerId, PlayerEntity player, int lastInput)
     {
         players[playerId] = player;
         playerAppliedInputs[playerId] = lastInput;
@@ -39,14 +39,14 @@ public class WorldInfo
     public static WorldInfo Deserialize(BitBuffer buffer)
     {
         int quantity = buffer.GetInt();
-        Dictionary<int, CubeEntity> currentPlayers = new Dictionary<int, CubeEntity>();
+        Dictionary<int, PlayerEntity> currentPlayers = new Dictionary<int, PlayerEntity>();
         Dictionary<int, int> appliedInputs = new Dictionary<int, int>();
         for (int i = 0; i < quantity; i++)
         {
             int playerId = buffer.GetInt();
             int lastAppliedInput = buffer.GetInt();
             appliedInputs[playerId] = lastAppliedInput;
-            CubeEntity player = CubeEntity.DeserializeInfo(buffer);
+            PlayerEntity player = PlayerEntity.DeserializeInfo(buffer);
             currentPlayers[playerId] = player;
         }
         return new WorldInfo(currentPlayers, appliedInputs);

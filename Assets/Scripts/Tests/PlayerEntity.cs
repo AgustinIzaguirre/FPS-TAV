@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class CubeEntity
+public class PlayerEntity
 {
     private static int maxSpaceX = 100;
     private static int minSpaceX = -100;
@@ -10,27 +10,27 @@ public class CubeEntity
 
     public Vector3 position;
     public Vector3 eulerAngles;
-    public GameObject cubeGameObject;
+    public GameObject playerObject;
     public float verticalVelocity;
     
-    public CubeEntity(GameObject cubeGameObject) {
-        this.cubeGameObject = cubeGameObject;
+    public PlayerEntity(GameObject playerObject) {
+        this.playerObject = playerObject;
     }
 
-    public CubeEntity(GameObject cubeGameObject, Vector3 position, Vector3 eulerAngles)
+    public PlayerEntity(GameObject playerObject, Vector3 position, Vector3 eulerAngles)
     {
-        this.cubeGameObject = cubeGameObject;
+        this.playerObject = playerObject;
         this.position = position;
         this.eulerAngles = eulerAngles;
     }
     
-    public CubeEntity(GameObject cubeGameObject, float verticalVelocity) {
-        this.cubeGameObject = cubeGameObject;
+    public PlayerEntity(GameObject playerObject, float verticalVelocity) {
+        this.playerObject = playerObject;
         this.verticalVelocity = verticalVelocity;
     }
     
     public void Serialize(BitBuffer buffer) {
-        var transform = cubeGameObject.transform;
+        var transform = playerObject.transform;
         var position = transform.position;
         var eulerAngles = transform.eulerAngles;
         FloatSerializer.SerializeFloat(buffer, position.x, minSpaceX, maxSpaceX, 0.001f);
@@ -56,44 +56,44 @@ public class CubeEntity
         verticalVelocity = buffer.GetFloat();
     }
 
-    public static CubeEntity DeserializeInfo(BitBuffer buffer)
+    public static PlayerEntity DeserializeInfo(BitBuffer buffer)
     {
-        CubeEntity newCubeEntity = new CubeEntity(null);
-        newCubeEntity.position = new Vector3();
-        newCubeEntity.eulerAngles = new Vector3();
-        newCubeEntity.position.x = FloatSerializer.DeserializeFloat(buffer, minSpaceX, maxSpaceX, 0.001f);
-        newCubeEntity.position.y = buffer.GetFloat();
-        newCubeEntity.position.z = FloatSerializer.DeserializeFloat(buffer, minSpaceZ, maxSpaceZ, 0.001f);
-        newCubeEntity.eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
-        newCubeEntity.eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
-        newCubeEntity.eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
-        newCubeEntity.verticalVelocity = buffer.GetFloat();
-        return newCubeEntity;
+        PlayerEntity newPlayerEntity = new PlayerEntity(null);
+        newPlayerEntity.position = new Vector3();
+        newPlayerEntity.eulerAngles = new Vector3();
+        newPlayerEntity.position.x = FloatSerializer.DeserializeFloat(buffer, minSpaceX, maxSpaceX, 0.001f);
+        newPlayerEntity.position.y = buffer.GetFloat();
+        newPlayerEntity.position.z = FloatSerializer.DeserializeFloat(buffer, minSpaceZ, maxSpaceZ, 0.001f);
+        newPlayerEntity.eulerAngles.x = DegreeAngle.DeserializeAngle(buffer);
+        newPlayerEntity.eulerAngles.y = DegreeAngle.DeserializeAngle(buffer);
+        newPlayerEntity.eulerAngles.z = DegreeAngle.DeserializeAngle(buffer);
+        newPlayerEntity.verticalVelocity = buffer.GetFloat();
+        return newPlayerEntity;
     }
     
     public void Apply()
     {
-        Transform transform = cubeGameObject.transform;
+        Transform transform = playerObject.transform;
         transform.position = position;
         transform.eulerAngles = eulerAngles;
     }
     
-    public static CubeEntity CreateInterpolated(CubeEntity previous, CubeEntity next, float startTime, float endTime,
+    public static PlayerEntity CreateInterpolated(PlayerEntity previous, PlayerEntity next, float startTime, float endTime,
         float currentTime, GameObject cube) {
-        var cubeEntity = new CubeEntity(cube);
-        cubeEntity.position += Interpolator.InterpolateVector3(previous.position, next.position, startTime,
+        var newPlayerEntity = new PlayerEntity(cube);
+        newPlayerEntity.position += Interpolator.InterpolateVector3(previous.position, next.position, startTime,
             endTime, currentTime);
-        cubeEntity.eulerAngles += Interpolator.InterpolateVector3(previous.eulerAngles, next.eulerAngles, 
+        newPlayerEntity.eulerAngles += Interpolator.InterpolateVector3(previous.eulerAngles, next.eulerAngles, 
             startTime, endTime, currentTime);
-        return cubeEntity;
+        return newPlayerEntity;
     }
 
-    public bool IsEqual(CubeEntity other, float positionThreshold, float rotationThreshold)
+    public bool IsEqual(PlayerEntity other, float positionThreshold, float rotationThreshold)
     {
-        Vector3 position = cubeGameObject.transform.position;
-        Vector3 rotation = cubeGameObject.transform.eulerAngles;
-        Vector3 otherPosition = other.cubeGameObject.transform.position;
-        Vector3 otherRotation = other.cubeGameObject.transform.eulerAngles;
+        Vector3 position = playerObject.transform.position;
+        Vector3 rotation = playerObject.transform.eulerAngles;
+        Vector3 otherPosition = other.playerObject.transform.position;
+        Vector3 otherRotation = other.playerObject.transform.eulerAngles;
         if (Math.Abs(position.x - otherPosition.x) > positionThreshold ||
             Math.Abs(position.y - otherPosition.y) > positionThreshold ||
             Math.Abs(position.z - otherPosition.z) > positionThreshold)
