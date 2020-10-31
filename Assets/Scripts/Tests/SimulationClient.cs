@@ -22,6 +22,7 @@ public class SimulationClient
     private List<GameInput> sentInputs;
     private List<GameInput> appliedInputs;
     private List<GameEvent> sentEvents;
+    private List<ShootEvent> sentShootEvents;
     private List<Snapshot> interpolationBuffer;
     private List<GameInput> inputsToExecute;
     private Dictionary<int, GameObject> players;
@@ -36,6 +37,7 @@ public class SimulationClient
     private readonly float timeToSend;
     private float timeout;
     private int eventNumber;
+    private int shootEventNumber;
     public int id;
     public bool isSpawned;
     public bool isPlaying;
@@ -50,6 +52,7 @@ public class SimulationClient
         sentInputs = new List<GameInput>();
         appliedInputs = new List<GameInput>();
         sentEvents = new List<GameEvent>();
+        sentShootEvents = new List<ShootEvent>();
         inputsToExecute = new List<GameInput>();
         render = false;
         clientController = null;
@@ -62,6 +65,7 @@ public class SimulationClient
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
+        shootEventNumber = 0;
         isSpawned = false;
         isPlaying = false;
         lastClientInput = 0;
@@ -96,16 +100,16 @@ public class SimulationClient
                     // TODO seems to be failing when trying to get key from snapshot
 //                    if (currentSnapshot.worldInfo.playerAppliedInputs.ContainsKey(id))
 //                    {
-                        Debug.Log("Receiving snapshot");
-                        int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
+//                        Debug.Log("Receiving snapshot");
+                        int lastInput = currentSnapshot.worldInfo.players[id].lastInputApplied;
                         AddToInterpolationBuffer(currentSnapshot);
                         if (render)
                         {
                             Interpolate();
 
-                            CalculatePrediction(currentSnapshot.worldInfo.players[id]);
-                            CubeEntity predictionEntity = new CubeEntity(playerPrediction);
-                            CubeEntity playerEntity = new CubeEntity(players[id]);
+                            CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
+                            PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
+                            PlayerEntity playerEntity = new PlayerEntity(players[id]);
                             RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                             lastServerInput = lastInput;
                             if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
@@ -140,6 +144,19 @@ public class SimulationClient
                         }
                     }
                 }
+                else if (packetType == (int) PacketType.SHOOT_EVENT)
+                {
+                    Debug.Log("Receiving ack of shoot event");
+                    int ackNumber = packet.buffer.GetInt();
+                    for (int i = 0; i < sentShootEvents.Count; i++)
+                    {
+                        if (ackNumber == sentShootEvents[i].shootEventNumber)
+                        {
+                            sentShootEvents.RemoveAt(i);
+                        }
+                    }
+                    Debug.Log("Shoot event list size = " + sentShootEvents.Count);
+                }
             }
             if (packetType == (int) PacketType.NEW_PLAYER)
             {
@@ -167,7 +184,7 @@ public class SimulationClient
             }
             if (packetType == (int) PacketType.START_INFO)
             {
-                Debug.Log("Receive Start Info");
+//                Debug.Log("Receive Start Info");
                 if (isSpawned)
                 {
                     WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
@@ -175,7 +192,7 @@ public class SimulationClient
                     {
                         if (playerId != id && !players.ContainsKey(playerId))
                         {
-                            SpawnPlayer(playerId, worldInfo.players[playerId]);
+                            SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
                         }
                     }
                     Debug.Log("Client instantiated");
@@ -198,9 +215,9 @@ public class SimulationClient
         }
     }
 
-    private void CalculatePrediction(CubeEntity serverPlayer)
+    private void CalculatePrediction(PlayerEntity serverPlayer)
     {
-        Debug.Log("Calculating prediction");
+//        Debug.Log("Calculating prediction");
         playerPrediction.transform.position = serverPlayer.position;
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
         int quantity = lastClientInput - lastServerInput;
@@ -289,7 +306,13 @@ public class SimulationClient
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
         if (Input.GetMouseButton(0))
         {
-            Shoot();  
+            int targetId = Shoot();
+            if (targetId >= 0)
+            {
+                Debug.Log("Sending shoot event");
+                shootEventNumber++;
+                SendShootEventToServer(new ShootEvent(id, targetId, clientTime, shootEventNumber));
+            }
         }
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -307,6 +330,7 @@ public class SimulationClient
         if (isPlaying)
         {
             SendInputToServer();
+            ResendShootEvents();
             CheckForGameEvents();
         }
     }
@@ -340,6 +364,21 @@ public class SimulationClient
         lastInputSent += (lastClientInput - lastInputSent) + actionInputsize;
     }
 
+    private void ResendShootEvents()
+    {
+        if (sentShootEvents.Count > 0)
+        {
+            ShootEvent firstEvent = sentShootEvents[0];
+            while (firstEvent != null && clientTime - firstEvent.time >= timeout)
+            {
+                sentShootEvents.RemoveAt(0);
+                shootEventNumber++;
+                ShootEvent newEvent = new ShootEvent(firstEvent.shooterId, firstEvent.targetId, clientTime, shootEventNumber);
+                SendShootEventToServer(newEvent);
+                firstEvent = sentShootEvents.Count > 0 ? sentShootEvents[0] : null;
+            }
+        }
+    }
     private void CheckForGameEvents()
     {
         GameEvent currentEvent = GetGameEvent();
@@ -360,6 +399,17 @@ public class SimulationClient
         packet.Free();
         
     }
+
+    private void SendShootEventToServer(ShootEvent currentShootEvent)
+    {
+        var packet = Packet.Obtain();
+        sentShootEvents.Add(currentShootEvent);
+        currentShootEvent.Serialize(packet.buffer, id);
+        packet.buffer.Flush();
+        channel.Send(packet, serverEndPoint);
+        packet.Free();
+    }
+
 
     private void ResendAndDeleteEvent()
     {
@@ -417,13 +467,13 @@ public class SimulationClient
                             nextWorldInfo.players.ContainsKey(playerId) &&
                             players.ContainsKey(playerId))
                         {
-                            CubeEntity previousCubeEntity = currentWorldInfo.players[playerId];
+                            PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
 
-                            CubeEntity nextCubeEntity = nextWorldInfo.players[playerId];
-                            CubeEntity interpolatedCube = CubeEntity.CreateInterpolated(previousCubeEntity,
-                                nextCubeEntity,
+                            PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
+                            PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
+                                nextPlayerEntity,
                                 startTime, endTime, clientTime, players[playerId]);
-                            interpolatedCube.Apply();
+                            interpolatedPlayer.Apply();
                         }
                     }
                 }
@@ -466,10 +516,10 @@ public class SimulationClient
         channel.Disconnect();
     }
 
-    public void Spawn(CubeEntity clientCube)
+    public void Spawn(PlayerEntity player)
     {
-            Vector3 position = clientCube.position;
-            Quaternion rotation = Quaternion.Euler(clientCube.eulerAngles);
+            Vector3 position = player.position;
+            Quaternion rotation = Quaternion.Euler(player.eulerAngles);
             players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
             isSpawned = true;
             clientController = players[id].GetComponent<CharacterController>();
@@ -481,28 +531,31 @@ public class SimulationClient
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
     }
     
-    public void SpawnPlayer(int playerId, CubeEntity playerCube)
+    public void SpawnPlayer(int playerId, PlayerEntity playerObject)
     {
-        Vector3 position = playerCube.position;
-        Quaternion rotation = Quaternion.Euler(playerCube.eulerAngles);
+        Vector3 position = playerObject.position;
+        Quaternion rotation = Quaternion.Euler(playerObject.eulerAngles);
         GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
         EnemyInfo enemyInfo = player.GetComponent<EnemyInfo>();
         enemyInfo.SetId(playerId);
         players[playerId] = player;
     }
 
-    public void Shoot()
+    public int Shoot()
     {
         playerCamera.GetComponent<AudioSource>().Play();
         playerCamera.GetComponent<MuzzleFlash>().PlayMuzzleFlash(); //TODO improve particle system position
-
+        int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
         {
             if (hit.transform.name.Contains("Enemy"))
             {
-                Debug.Log(hit.transform.GetComponent<EnemyInfo>().GetId());
+                targetId = hit.transform.GetComponent<EnemyInfo>().GetId();
+                Debug.Log("hit player = " + targetId);
             }
         }
+
+        return targetId;
     }
 }

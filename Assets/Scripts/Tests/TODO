@@ -38,3 +38,11 @@ A considerar capaz conviene.
 * TODO refactor worldInfo, agregando una nueva clase que tenga toda la info del jugador a su vex renombrar todo lo que
 dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo
 * TODO un bool de esta disparando o no el jugador para mostrar la animacion
+
+Animaciones
+* De los otros personajes la animacion es parte del estado, entonces lo que hay que hacer es que en el snapshot se envie el estado del jugador, para la animacion
+* Cuando abris el animator a la izquierda esta layers y parameters, podes crear un boolean agachado, corriendo, etc Le llevas una flechita de anyState a agachado
+cuando agachado sea true.
+
+* En el worldInfo solo tener un diccionario del id a PlayerInfo
+* En el server sacar clientInfo y playerCubes y activePlayers y cambiarlo por un unico PlayerInfo.
