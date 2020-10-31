@@ -42,6 +42,18 @@ public class PlayerInfo
         damage = playerDamage;
         isShooting = isPlayerShooting;
     }
+    
+    public PlayerInfo(int playerId, PlayerEntity playerEntity, bool isActive)
+    {
+        id = playerId;
+        lastInputApplied = 0;
+        this.playerEntity = playerEntity;
+        playerGameObject = playerEntity.playerObject;
+        life = MAX_LIFE;
+        damage = MAX_DAMAGE / 3;
+        isShooting = false;
+        this.isActive = isActive;
+    }
 
     public void SetPlayerGameObject(GameObject playerGameObject)
     {

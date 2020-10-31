@@ -169,7 +169,6 @@ public class SimulationServer
             }
             else if (packetType == (int) PacketType.SHOOT_EVENT)
             {
-                // handle event   
                 int clientId = packet.buffer.GetInt();
                 if (players[clientId].isActive)
                 {

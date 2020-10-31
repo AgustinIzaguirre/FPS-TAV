@@ -34,10 +34,8 @@ public class PlayerEntity
         var position = transform.position;
         var eulerAngles = transform.eulerAngles;
         FloatSerializer.SerializeFloat(buffer, position.x, minSpaceX, maxSpaceX, 0.001f);
-//        buffer.PutFloat(position.x);
         buffer.PutFloat(position.y);
         FloatSerializer.SerializeFloat(buffer, position.z, minSpaceZ, maxSpaceZ, 0.001f);
-//        buffer.PutFloat(position.z);
         DegreeAngle.SerializeAngle(buffer, eulerAngles.x);
         DegreeAngle.SerializeAngle(buffer, eulerAngles.y);
         DegreeAngle.SerializeAngle(buffer, eulerAngles.z);
@@ -101,18 +99,6 @@ public class PlayerEntity
             Debug.Log("Position not equal");
             return false;
         }
-
-//        if ((Math.Abs(rotation.x - otherRotation.x) > rotationThreshold && 
-//             Math.Abs((360.0 - rotation.x) - otherRotation.x) > rotationThreshold)||
-//            (Math.Abs(rotation.y - otherRotation.y) > rotationThreshold &&
-//             Math.Abs((360.0 - rotation.y) - otherRotation.y) > rotationThreshold) ||
-//            (Math.Abs(rotation.z - otherRotation.z) > rotationThreshold &&
-//             Math.Abs(360.0 - rotation.z - otherRotation.z) > rotationThreshold))
-//        {
-//            Debug.Log("Rotation not equal");
-//            return false;
-//        }
-
         return true;
     }
 }
