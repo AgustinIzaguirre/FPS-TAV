@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using UnityEngine;
 
@@ -68,6 +69,10 @@ public class PlayerInfo
         return playerGameObject;
     }
 
+    public void IsShootedBy(PlayerInfo shooter)
+    {
+        life = Math.Max(0f, life - shooter.damage);
+    }
     public void Serialize(BitBuffer buffer)
     {
         buffer.PutInt(id);

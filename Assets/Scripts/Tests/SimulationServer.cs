@@ -21,6 +21,7 @@ public class SimulationServer
     private float eventTimeOut;
     private List<NewPlayerEvent> newPlayerEventSent;
     private List<StartInfoEvent> startInfoSent;
+    private Dictionary<int, int> lastShotApplied;
 
     public SimulationServer(IPEndPoint endPoint, float timeToSend, GameObject serverPrefab)
     {
@@ -29,6 +30,7 @@ public class SimulationServer
         inputsToApply = new Dictionary<int, List<GameInput>>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
+        lastShotApplied = new Dictionary<int, int>();
         this.serverPrefab = serverPrefab;
         this.timeToSend = timeToSend;
         sequence = 0;
@@ -173,6 +175,12 @@ public class SimulationServer
                 {
                     PlayerInfo currentClient = players[clientId];
                     ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
+                    if (!lastShotApplied.ContainsKey(clientId) &&
+                        lastShotApplied[clientId] < currentShootEvent.shootEventNumber)
+                    {
+                        lastShotApplied[clientId] = currentShootEvent.shootEventNumber;
+                        players[currentShootEvent.targetId].IsShootedBy(players[currentShootEvent.shooterId]);
+                    }
                     SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
                 }
             }
