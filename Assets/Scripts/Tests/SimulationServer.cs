@@ -21,6 +21,7 @@ public class SimulationServer
     private float eventTimeOut;
     private List<NewPlayerEvent> newPlayerEventSent;
     private List<StartInfoEvent> startInfoSent;
+    private Dictionary<int, int> lastShotApplied;
 
     public SimulationServer(IPEndPoint endPoint, float timeToSend, GameObject serverPrefab)
     {
@@ -29,6 +30,7 @@ public class SimulationServer
         inputsToApply = new Dictionary<int, List<GameInput>>();
         newPlayerEventSent = new List<NewPlayerEvent>();
         startInfoSent = new List<StartInfoEvent>();
+        lastShotApplied = new Dictionary<int, int>();
         this.serverPrefab = serverPrefab;
         this.timeToSend = timeToSend;
         sequence = 0;
@@ -148,10 +150,10 @@ public class SimulationServer
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
                     currentPlayer.lastInputApplied = ackNumber;
-                    if (clientId == 2)
-                    {
-                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
-                    }
+//                    if (clientId == 2)
+//                    {
+//                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
+//                    }
                 }
             }
             else if (packetType == (int) PacketType.EVENT)
@@ -167,12 +169,22 @@ public class SimulationServer
             }
             else if (packetType == (int) PacketType.SHOOT_EVENT)
             {
-                // handle event   
                 int clientId = packet.buffer.GetInt();
                 if (players[clientId].isActive)
                 {
                     PlayerInfo currentClient = players[clientId];
                     ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
+                    if (!lastShotApplied.ContainsKey(clientId) ||
+                        lastShotApplied[clientId] < currentShootEvent.shootEventNumber)
+                    {
+                        lastShotApplied[clientId] = currentShootEvent.shootEventNumber;
+                        players[currentShootEvent.targetId].IsShootedBy(players[currentShootEvent.shooterId]);
+                        if (players[currentShootEvent.targetId].life <= 0.001f)
+                        {
+                            Debug.Log("Player " + currentShootEvent.targetId + " is dead");
+                           //TODO delete gameObject from scene and not from dictionary so it keeps sending player with zero life and remove it if still have it   
+                        }
+                    }
                     SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
                 }
             }

@@ -29,20 +29,23 @@ A considerar capaz conviene.
 * Ademas cuando es rotacion se manda como un nuevo input.
 * Terminar el menu y adaptar el SimulationTest para que haga el build.
 * La prediccion moverla en el FixedUpdate
-* El hit ejecutarlo en el update.
+* El hit ejecutarlo en el update. //DONE
 * El inicializar al jugador en todo el lugar posible evitando adentro del cuadrado que no se puede.
 * Ajustar el collider del character controller al modelo que use
 * Chequear que un mismo cliente no se conecte mas de una vez
 * Mirar el sequence si es incremental por cliente o uno por cada worldInfo y despues mirar como se usa del lado del cliente
 * Hacer que no se pueda conectar varias veces un mismo cliente(guardar los endpoints de los clientes)
 * TODO refactor worldInfo, agregando una nueva clase que tenga toda la info del jugador a su vex renombrar todo lo que
-dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo
-* TODO un bool de esta disparando o no el jugador para mostrar la animacion
+dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo //DONE
+* TODO un bool de esta disparando o no el jugador para mostrar la animacion // DONE
 
 Animaciones
 * De los otros personajes la animacion es parte del estado, entonces lo que hay que hacer es que en el snapshot se envie el estado del jugador, para la animacion
 * Cuando abris el animator a la izquierda esta layers y parameters, podes crear un boolean agachado, corriendo, etc Le llevas una flechita de anyState a agachado
 cuando agachado sea true.
 
-* En el worldInfo solo tener un diccionario del id a PlayerInfo
-* En el server sacar clientInfo y playerCubes y activePlayers y cambiarlo por un unico PlayerInfo.
+* En el worldInfo solo tener un diccionario del id a PlayerInfo //DONE
+* En el server sacar clientInfo y playerCubes y activePlayers y cambiarlo por un unico PlayerInfo. // DONE
+
+* Agregar lo de la animacion de que se muere un enemigo y eliminar el game objext tanto server como cliente
+* Decidir que hacer cuando matan al jugador.

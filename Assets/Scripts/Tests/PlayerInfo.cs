@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using UnityEngine;
 
@@ -41,6 +42,18 @@ public class PlayerInfo
         damage = playerDamage;
         isShooting = isPlayerShooting;
     }
+    
+    public PlayerInfo(int playerId, PlayerEntity playerEntity, bool isActive)
+    {
+        id = playerId;
+        lastInputApplied = 0;
+        this.playerEntity = playerEntity;
+        playerGameObject = playerEntity.playerObject;
+        life = MAX_LIFE;
+        damage = MAX_DAMAGE / 3;
+        isShooting = false;
+        this.isActive = isActive;
+    }
 
     public void SetPlayerGameObject(GameObject playerGameObject)
     {
@@ -68,6 +81,10 @@ public class PlayerInfo
         return playerGameObject;
     }
 
+    public void IsShootedBy(PlayerInfo shooter)
+    {
+        life = Math.Max(0f, life - shooter.damage);
+    }
     public void Serialize(BitBuffer buffer)
     {
         buffer.PutInt(id);

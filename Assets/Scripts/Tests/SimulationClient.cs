@@ -25,7 +25,7 @@ public class SimulationClient
     private List<ShootEvent> sentShootEvents;
     private List<Snapshot> interpolationBuffer;
     private List<GameInput> inputsToExecute;
-    private Dictionary<int, GameObject> players;
+    private Dictionary<int, PlayerInfo> players;
     private GameObject playerPrediction;
     private int lastInputSent;
     private int lastInputRemoved;
@@ -48,7 +48,7 @@ public class SimulationClient
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
-        players = new Dictionary<int, GameObject>();
+        players = new Dictionary<int, PlayerInfo>();
         sentInputs = new List<GameInput>();
         appliedInputs = new List<GameInput>();
         sentEvents = new List<GameEvent>();
@@ -109,14 +109,13 @@ public class SimulationClient
 
                             CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
                             PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
-                            PlayerEntity playerEntity = new PlayerEntity(players[id]);
+                            PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
                             RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                             lastServerInput = lastInput;
                             if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                             {
                                 Debug.Log("Not equals");
-                                players[id].transform.position = playerPrediction.transform.position;
-//                            players[id].transform.rotation = playerPrediction.transform.rotation;
+                                players[id].playerGameObject.transform.position = playerPrediction.transform.position;
                             }
 
                         }
@@ -197,6 +196,7 @@ public class SimulationClient
                     }
                     Debug.Log("Client instantiated");
                     isPlaying = true;
+                    players[id].ActivatePlayer();
                     SendAck((int) PacketType.START_INFO, id);
                 }
             }
@@ -270,7 +270,7 @@ public class SimulationClient
     {
         RotateCamera();
         float mouseX = Input.GetAxis("Mouse X");
-        return new GameInput(mouseX, players[id].transform.eulerAngles);
+        return new GameInput(mouseX, players[id].playerGameObject.transform.eulerAngles);
     }
 
     private void GetUserInputs(Transform transform)
@@ -340,7 +340,7 @@ public class SimulationClient
         var packet = Packet.Obtain();
         
         // TODO Maybe separate in function
-        Transform transform = players[id].transform;
+        Transform transform = players[id].playerGameObject.transform;
         int actionInputsize = inputsToExecute.Count;
         foreach (var input in inputsToExecute)
         {
@@ -463,7 +463,12 @@ public class SimulationClient
                 {
                     if (playerId != id)
                     {
-                        if (currentWorldInfo.players.ContainsKey(playerId) &&
+                        if (currentWorldInfo.players[playerId].life <= 0.001)
+                        {
+                            Debug.Log("Player " + playerId + " is dead on client");
+                            // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
+                        }
+                        else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
                             players.ContainsKey(playerId))
                         {
@@ -472,9 +477,14 @@ public class SimulationClient
                             PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
                             PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
                                 nextPlayerEntity,
-                                startTime, endTime, clientTime, players[playerId]);
+                                startTime, endTime, clientTime, players[playerId].playerGameObject);
                             interpolatedPlayer.Apply();
                         }
+                    }
+                    else if (currentWorldInfo.players[playerId].life <= 0.001)
+                    {
+                        Debug.Log("You Lost");
+                        //TODO decide what to do when user is dead
                     }
                 }
             }
@@ -520,25 +530,27 @@ public class SimulationClient
     {
             Vector3 position = player.position;
             Quaternion rotation = Quaternion.Euler(player.eulerAngles);
-            players[id] = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
+            GameObject playerObject = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
+            players[id] = new PlayerInfo(id, new PlayerEntity(playerObject), false);
             isSpawned = true;
-            clientController = players[id].GetComponent<CharacterController>();
-            gravityController = players[id].GetComponent<GravityController>();
+            clientController = players[id].playerGameObject.GetComponent<CharacterController>();
+            gravityController = players[id].playerGameObject.GetComponent<GravityController>();
             playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
             predictionController = playerPrediction.GetComponent<CharacterController>();
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
-            playerCamera = players[id].GetComponentInChildren< Camera >();
-            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(), players[id].GetComponent<Collider>());
+            playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
+            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
+                players[id].playerGameObject.GetComponent<Collider>());
     }
     
     public void SpawnPlayer(int playerId, PlayerEntity playerObject)
     {
         Vector3 position = playerObject.position;
         Quaternion rotation = Quaternion.Euler(playerObject.eulerAngles);
-        GameObject player = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
-        EnemyInfo enemyInfo = player.GetComponent<EnemyInfo>();
+        GameObject playerGameobject = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
+        EnemyInfo enemyInfo = playerGameobject.GetComponent<EnemyInfo>();
         enemyInfo.SetId(playerId);
-        players[playerId] = player;
+        players[playerId] = new PlayerInfo(playerId, new PlayerEntity(playerGameobject), true);
     }
 
     public int Shoot()
