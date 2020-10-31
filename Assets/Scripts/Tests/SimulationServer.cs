@@ -96,11 +96,11 @@ public class SimulationServer
          {
 //             Debug.Log("Sending snapshot for client = " + clientId);
              float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>().GetVerticalVelocity();
-             PlayerEntity clientEntity = new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity);
-             currentWorldInfo.AddPlayer(clientId, clientEntity, players[clientId].lastInputApplied);
+             players[clientId].SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
+             currentWorldInfo.AddPlayer(players[clientId]);
              if (clientId == 2)
              {
-                 Debug.Log("Client lastInput on server = " + currentWorldInfo.playerAppliedInputs[clientId]);
+                 Debug.Log("Client lastInput on server = " + currentWorldInfo.players[clientId].lastInputApplied);
              }
          }
 

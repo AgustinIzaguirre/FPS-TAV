@@ -97,13 +97,13 @@ public class SimulationClient
 //                    if (currentSnapshot.worldInfo.playerAppliedInputs.ContainsKey(id))
 //                    {
                         Debug.Log("Receiving snapshot");
-                        int lastInput = currentSnapshot.worldInfo.playerAppliedInputs[id];
+                        int lastInput = currentSnapshot.worldInfo.players[id].lastInputApplied;
                         AddToInterpolationBuffer(currentSnapshot);
                         if (render)
                         {
                             Interpolate();
 
-                            CalculatePrediction(currentSnapshot.worldInfo.players[id]);
+                            CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
                             PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
                             PlayerEntity playerEntity = new PlayerEntity(players[id]);
                             RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
@@ -175,7 +175,7 @@ public class SimulationClient
                     {
                         if (playerId != id && !players.ContainsKey(playerId))
                         {
-                            SpawnPlayer(playerId, worldInfo.players[playerId]);
+                            SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
                         }
                     }
                     Debug.Log("Client instantiated");
@@ -417,9 +417,9 @@ public class SimulationClient
                             nextWorldInfo.players.ContainsKey(playerId) &&
                             players.ContainsKey(playerId))
                         {
-                            PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId];
+                            PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
 
-                            PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId];
+                            PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
                             PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
                                 nextPlayerEntity,
                                 startTime, endTime, clientTime, players[playerId]);

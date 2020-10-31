@@ -3,25 +3,20 @@ using UnityEngine;
 
 public class WorldInfo
 {
-    public Dictionary<int, PlayerEntity> players;
-    public Dictionary<int, int> playerAppliedInputs;
-
+    public Dictionary<int, PlayerInfo> players;
     public WorldInfo()
     {
-        players = new Dictionary<int, PlayerEntity>();
-        playerAppliedInputs = new Dictionary<int, int>();
+        players = new Dictionary<int, PlayerInfo>();
     }
 
-    private WorldInfo(Dictionary<int, PlayerEntity> players, Dictionary<int, int> playerAppliedInputs)
+    private WorldInfo(Dictionary<int, PlayerInfo> players)
     {
         this.players = players;
-        this.playerAppliedInputs = playerAppliedInputs;
     }
 
-    public void AddPlayer(int playerId, PlayerEntity player, int lastInput)
+    public void AddPlayer(PlayerInfo player)
     {
-        players[playerId] = player;
-        playerAppliedInputs[playerId] = lastInput;
+        players[player.id] = player;
     }
 
     public void Serialize(BitBuffer buffer)
@@ -29,9 +24,6 @@ public class WorldInfo
         buffer.PutInt(players.Count);
         foreach (var playerId in players.Keys)
         {
-            buffer.PutInt(playerId);
-            Debug.Log("Serializing playerId = " + playerId);
-            buffer.PutInt(playerAppliedInputs[playerId]);
             players[playerId].Serialize(buffer);
         }
     }
@@ -39,16 +31,12 @@ public class WorldInfo
     public static WorldInfo Deserialize(BitBuffer buffer)
     {
         int quantity = buffer.GetInt();
-        Dictionary<int, PlayerEntity> currentPlayers = new Dictionary<int, PlayerEntity>();
-        Dictionary<int, int> appliedInputs = new Dictionary<int, int>();
+        Dictionary<int, PlayerInfo> currentPlayers = new Dictionary<int, PlayerInfo>();
         for (int i = 0; i < quantity; i++)
         {
-            int playerId = buffer.GetInt();
-            int lastAppliedInput = buffer.GetInt();
-            appliedInputs[playerId] = lastAppliedInput;
-            PlayerEntity player = PlayerEntity.DeserializeInfo(buffer);
-            currentPlayers[playerId] = player;
+            PlayerInfo player = PlayerInfo.Deserialize(buffer);
+            currentPlayers[player.id] = player;
         }
-        return new WorldInfo(currentPlayers, appliedInputs);
+        return new WorldInfo(currentPlayers);
     }
 }
