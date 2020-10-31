@@ -182,7 +182,8 @@ public class SimulationServer
                         if (players[currentShootEvent.targetId].life <= 0.001f)
                         {
                             Debug.Log("Player " + currentShootEvent.targetId + " is dead");
-                           //TODO delete gameObject from scene and not from dictionary so it keeps sending player with zero life and remove it if still have it   
+                            GameObject.Destroy(players[clientId].playerGameObject);
+                            //TODO delete gameObject from scene and not from dictionary so it keeps sending player with zero life and remove it if still have it   
                         }
                     }
                     SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);

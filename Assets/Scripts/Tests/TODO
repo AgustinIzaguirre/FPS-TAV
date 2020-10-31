@@ -49,3 +49,4 @@ cuando agachado sea true.
 
 * Agregar lo de la animacion de que se muere un enemigo y eliminar el game objext tanto server como cliente
 * Decidir que hacer cuando matan al jugador.
+* Preguntar como hacer para que en un update me tome un solo click y no varios.
