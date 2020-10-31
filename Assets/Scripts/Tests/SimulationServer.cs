@@ -150,10 +150,10 @@ public class SimulationServer
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
                     currentPlayer.lastInputApplied = ackNumber;
-                    if (clientId == 2)
-                    {
-                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
-                    }
+//                    if (clientId == 2)
+//                    {
+//                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
+//                    }
                 }
             }
             else if (packetType == (int) PacketType.EVENT)
@@ -175,11 +175,16 @@ public class SimulationServer
                 {
                     PlayerInfo currentClient = players[clientId];
                     ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
-                    if (!lastShotApplied.ContainsKey(clientId) &&
+                    if (!lastShotApplied.ContainsKey(clientId) ||
                         lastShotApplied[clientId] < currentShootEvent.shootEventNumber)
                     {
                         lastShotApplied[clientId] = currentShootEvent.shootEventNumber;
                         players[currentShootEvent.targetId].IsShootedBy(players[currentShootEvent.shooterId]);
+                        if (players[currentShootEvent.targetId].life <= 0.001f)
+                        {
+                            Debug.Log("Player " + currentShootEvent.targetId + " is dead");
+                           //TODO delete gameObject from scene and maybe dictionary   
+                        }
                     }
                     SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
                 }
