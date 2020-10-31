@@ -466,7 +466,7 @@ public class SimulationClient
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
-                            // TODO trigger animation and after some time remove component and from the dictionary of players
+                            // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
                         }
                         else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
