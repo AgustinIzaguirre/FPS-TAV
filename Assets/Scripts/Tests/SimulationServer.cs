@@ -98,10 +98,10 @@ public class SimulationServer
              float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>().GetVerticalVelocity();
              players[clientId].SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
              currentWorldInfo.AddPlayer(players[clientId]);
-             if (clientId == 2)
-             {
-                 Debug.Log("Client lastInput on server = " + currentWorldInfo.players[clientId].lastInputApplied);
-             }
+//             if (clientId == 2)
+//             {
+//                 Debug.Log("Client lastInput on server = " + currentWorldInfo.players[clientId].lastInputApplied);
+//             }
          }
 
          return currentWorldInfo;
@@ -164,6 +164,17 @@ public class SimulationServer
                      GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
                      SendAck(currentEvent.eventNumber, PacketType.EVENT, currentClient.endPoint);
                  }
+            }
+            else if (packetType == (int) PacketType.SHOOT_EVENT)
+            {
+                // handle event   
+                int clientId = packet.buffer.GetInt();
+                if (players[clientId].isActive)
+                {
+                    PlayerInfo currentClient = players[clientId];
+                    ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
+                    SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
+                }
             }
             else if (packetType == (int) PacketType.JOIN_GAME)
             {
