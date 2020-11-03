@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using Tests;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.PlayerLoop;
@@ -97,8 +98,14 @@ public class SimulationServer
          foreach (var clientId in players.Keys)
          {
 //             Debug.Log("Sending snapshot for client = " + clientId);
-             float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>().GetVerticalVelocity();
-             players[clientId].SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
+             if (players[clientId].isActive)
+             {
+                 float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>()
+                     .GetVerticalVelocity();
+                 players[clientId]
+                     .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
+             }
+
              currentWorldInfo.AddPlayer(players[clientId]);
 //             if (clientId == 2)
 //             {
@@ -113,12 +120,16 @@ public class SimulationServer
      {
          foreach (var clientId in players.Keys)
          {
-             GameObject playerObject = players[clientId].GetPlayerGameObject();
-             Transform clientTransform = playerObject.transform;
-             PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
-                 playerObject.GetComponent<CharacterController>(),
-                 playerObject.GetComponent<GravityController>(), clientTransform);
-             inputsToApply[clientId].Clear();
+             PlayerInfo currentPlayer = players[clientId];
+             if (currentPlayer.isActive && currentPlayer.isAlive)
+             {
+                 GameObject playerObject = currentPlayer.GetPlayerGameObject();
+                 Transform clientTransform = playerObject.transform;
+                 PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
+                     playerObject.GetComponent<CharacterController>(),
+                     playerObject.GetComponent<GravityController>(), clientTransform);
+                 inputsToApply[clientId].Clear();
+             }
          }
      }
      
@@ -182,7 +193,8 @@ public class SimulationServer
                         if (players[currentShootEvent.targetId].life <= 0.001f)
                         {
                             Debug.Log("Player " + currentShootEvent.targetId + " is dead");
-                            GameObject.Destroy(players[clientId].playerGameObject);
+                            players[currentShootEvent.targetId].MarkAsDead();
+                            GameObject.Destroy(players[currentShootEvent.targetId].playerGameObject);
                             //TODO delete gameObject from scene and not from dictionary so it keeps sending player with zero life and remove it if still have it   
                         }
                     }

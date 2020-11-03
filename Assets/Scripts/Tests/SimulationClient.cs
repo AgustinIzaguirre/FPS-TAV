@@ -466,12 +466,14 @@ public class SimulationClient
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
+                            players[playerId].MarkAsDead();
                             GameObject.Destroy(players[playerId].playerGameObject);
+                            
                             // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
                         }
                         else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
-                            players.ContainsKey(playerId))
+                            players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
                         {
                             PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
 

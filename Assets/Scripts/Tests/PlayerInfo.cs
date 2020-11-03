@@ -17,6 +17,7 @@ public class PlayerInfo
     public float damage;
     public bool isShooting;
     public bool isActive;
+    public bool isAlive;
     public PlayerEntity playerEntity;
 
     public PlayerInfo(int id, IPEndPoint endPoint)
@@ -29,18 +30,26 @@ public class PlayerInfo
         isShooting = false;
         isActive = false;
         playerEntity = null;
+        isAlive = true;
     }
 
     public PlayerInfo(int playerId, int playerLastAppliedInput, PlayerEntity currentPlayerEntity, float playerLife,
-        float playerDamage, bool isPlayerShooting)
+        float playerDamage, bool isPlayerShooting, bool isAlive)
     {
         id = playerId;
         lastInputApplied = playerLastAppliedInput;
-        playerEntity = currentPlayerEntity;
-        playerGameObject = playerEntity.playerObject;
+        playerEntity = null;
+        playerGameObject = null;
+        if (isAlive)
+        {
+            playerEntity = currentPlayerEntity;
+            playerGameObject = playerEntity.playerObject;
+        }
         life = playerLife;
         damage = playerDamage;
         isShooting = isPlayerShooting;
+        this.isAlive = isAlive;
+        this.isActive = isAlive;
     }
     
     public PlayerInfo(int playerId, PlayerEntity playerEntity, bool isActive)
@@ -53,6 +62,7 @@ public class PlayerInfo
         damage = MAX_DAMAGE / 3;
         isShooting = false;
         this.isActive = isActive;
+        isAlive = true;
     }
 
     public void SetPlayerGameObject(GameObject playerGameObject)
@@ -84,12 +94,21 @@ public class PlayerInfo
     public void IsShootedBy(PlayerInfo shooter)
     {
         life = Math.Max(0f, life - shooter.damage);
+        if (life <= 0.001)
+        {
+            isAlive = false;
+        }
     }
     public void Serialize(BitBuffer buffer)
     {
         buffer.PutInt(id);
         buffer.PutInt(lastInputApplied);
-        playerEntity.Serialize(buffer);
+        int isAliveValue = isAlive ? 1 : 0;
+        buffer.PutInt(isAliveValue, 0, 1);
+        if (isAlive)
+        {
+            playerEntity.Serialize(buffer);
+        }
         FloatSerializer.SerializeFloat(buffer, life, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         FloatSerializer.SerializeFloat(buffer, damage, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
         int shootingValue = isShooting ? 1 : 0;
@@ -100,10 +119,23 @@ public class PlayerInfo
     {
         int playerId = buffer.GetInt();
         int playerLastAppliedInput = buffer.GetInt();
-        PlayerEntity currentPlayerEntity= PlayerEntity.DeserializeInfo(buffer);
+        PlayerEntity currentPlayerEntity = null;
+        bool isPlayerAlive = buffer.GetInt(0, 1) == 1;
+        if (isPlayerAlive)
+        {
+            currentPlayerEntity = PlayerEntity.DeserializeInfo(buffer);
+        }
+
         float playerLife = FloatSerializer.DeserializeFloat(buffer, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         float playerDamage = FloatSerializer.DeserializeFloat(buffer, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
-        bool isPlayerShooting = buffer.GetInt(0, 1) == 1 ? true : false;
-        return new PlayerInfo(playerId, playerLastAppliedInput, currentPlayerEntity, playerLife, playerDamage, isPlayerShooting);
+        bool isPlayerShooting = buffer.GetInt(0, 1) == 1;
+        return new PlayerInfo(playerId, playerLastAppliedInput, currentPlayerEntity, playerLife, playerDamage,
+            isPlayerShooting, isPlayerAlive);
+    }
+
+    public void MarkAsDead()
+    {
+        isAlive = false;
+        isActive = false;
     }
 }
