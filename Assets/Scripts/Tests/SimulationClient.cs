@@ -545,7 +545,8 @@ public class SimulationClient
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
             playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
             weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
-                playerCamera.GetComponent<MuzzleFlash>());
+                playerCamera.GetComponent<MuzzleFlash>(),
+                 playerCamera.transform.Find("BulletTrail").gameObject);
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
                 players[id].playerGameObject.GetComponent<Collider>());
     }
@@ -571,6 +572,8 @@ public class SimulationClient
                 targetId = hit.transform.GetComponent<EnemyInfo>().GetId();
                 Debug.Log("hit player = " + targetId);
             }
+
+            weapon.SpawnBullet(playerCamera.transform.position, hit.point);
         }
 
         return targetId;

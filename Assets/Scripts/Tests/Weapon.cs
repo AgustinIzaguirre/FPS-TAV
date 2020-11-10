@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityStandardAssets.Utility;
 
 public class Weapon
 {
@@ -7,12 +8,14 @@ public class Weapon
 
     public AudioSource audioSource;
     public MuzzleFlash muzzleFlash;
+    public GameObject bulletTrail;
 
-    public Weapon(float shootTimeOut, AudioSource audioSource, MuzzleFlash muzzleFlash)
+    public Weapon(float shootTimeOut, AudioSource audioSource, MuzzleFlash muzzleFlash, GameObject bulletTrail)
     {
         this.shootTimeOut = shootTimeOut;
         this.audioSource = audioSource;
         this.muzzleFlash = muzzleFlash;
+        this.bulletTrail = bulletTrail;
         lastShoot = -1f;
     }
 
@@ -27,5 +30,15 @@ public class Weapon
         }
 
         return false;
-    } 
+    }
+
+    public void SpawnBullet(Vector3 shootPosition, Vector3 hitPosition)
+    {
+        GameObject bulletTrailEffect =
+            GameObject.Instantiate(bulletTrail, shootPosition, Quaternion.identity);
+        LineRenderer lineRenderer = bulletTrail.GetComponent<LineRenderer>();
+        lineRenderer.SetPosition(0, shootPosition);
+        lineRenderer.SetPosition(1, hitPosition);
+        GameObject.Destroy(bulletTrailEffect, 1f);
+    }
 }
