@@ -49,3 +49,11 @@ cuando agachado sea true.
 
 * Agregar lo de la animacion de que se muere un enemigo y eliminar el game objext tanto server como cliente
 * Decidir que hacer cuando matan al jugador.
+* Preguntar como hacer para que en un update me tome un solo click y no varios.
+
+* Hacer una clase wrapper de weapon que dispare cada cierto time rate con el boton presionado.
+* Capaz hacer que el server envie tal jugador disparo a tal confiable.
+
+* Comandos para correr app en mac:
+       - xattr -cr pathToApp.app
+       - chmod -R +x pathToApp/Contents/MacOs

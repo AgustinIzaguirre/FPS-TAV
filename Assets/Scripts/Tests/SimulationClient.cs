@@ -42,6 +42,7 @@ public class SimulationClient
     public bool isSpawned;
     public bool isPlaying;
     private IPEndPoint serverEndPoint;
+    private Weapon weapon;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab)
@@ -72,6 +73,7 @@ public class SimulationClient
         lastServerInput = 0;
         this.simulationPrefab = simulationPrefab;
         this.enemyPrefab = enemyPrefab;
+        this.weapon = null;
     }
 
     public void UpdateClient()
@@ -304,7 +306,7 @@ public class SimulationClient
     private void GetUserActionInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && weapon.Shoot(clientTime))
         {
             int targetId = Shoot();
             if (targetId >= 0)
@@ -466,11 +468,14 @@ public class SimulationClient
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
+                            players[playerId].MarkAsDead();
+                            GameObject.Destroy(players[playerId].playerGameObject);
+                            
                             // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
                         }
                         else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
-                            players.ContainsKey(playerId))
+                            players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
                         {
                             PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
 
@@ -539,6 +544,8 @@ public class SimulationClient
             predictionController = playerPrediction.GetComponent<CharacterController>();
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
             playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
+            weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
+                playerCamera.GetComponent<MuzzleFlash>());
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
                 players[id].playerGameObject.GetComponent<Collider>());
     }
@@ -555,8 +562,6 @@ public class SimulationClient
 
     public int Shoot()
     {
-        playerCamera.GetComponent<AudioSource>().Play();
-        playerCamera.GetComponent<MuzzleFlash>().PlayMuzzleFlash(); //TODO improve particle system position
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
