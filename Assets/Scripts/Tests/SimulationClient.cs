@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using Tests;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using Object = UnityEngine.Object;
 
 public class SimulationClient
 {
@@ -117,10 +119,17 @@ public class SimulationClient
                             PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
                             RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                             lastServerInput = lastInput;
+                            Debug.Log("Prediction = " + predictionEntity.position.y);
+                            Debug.Log("Current = " + playerEntity.position.y);
                             if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                             {
                                 Debug.Log("Not equals");
-                                players[id].playerGameObject.transform.position = playerPrediction.transform.position;
+                                Vector3 newPosition = playerPrediction.transform.position;
+                                if (Math.Abs(playerPrediction.transform.position.y - players[id].playerGameObject.transform.position.y) <= 1.0f)
+                                {
+                                    newPosition.y = players[id].playerGameObject.transform.position.y;
+                                }
+                                players[id].playerGameObject.transform.position = newPosition;
                             }
 
                         }

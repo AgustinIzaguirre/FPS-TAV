@@ -93,7 +93,7 @@ public class PlayerEntity
         Vector3 otherPosition = other.playerObject.transform.position;
         Vector3 otherRotation = other.playerObject.transform.eulerAngles;
         if (Math.Abs(position.x - otherPosition.x) > positionThreshold ||
-            Math.Abs(position.y - otherPosition.y) > positionThreshold ||
+            Math.Abs(position.y - otherPosition.y) > 1.0f ||
             Math.Abs(position.z - otherPosition.z) > positionThreshold)
         {
             Debug.Log("Position not equal");
