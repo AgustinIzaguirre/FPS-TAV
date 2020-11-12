@@ -427,7 +427,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4639168018266481884}
   m_LocalRotation: {x: -0.50000036, y: 0.49999964, z: 0.49999964, w: 0.50000036}
-  m_LocalPosition: {x: -0, y: 0.17, z: -0.02168165}
+  m_LocalPosition: {x: -0, y: 1.2856663, z: -0.02168165}
   m_LocalScale: {x: 0.99999994, y: 0.99999994, z: 1}
   m_Children:
   - {fileID: 3683573219190174451}
@@ -1014,8 +1014,8 @@ GameObject:
   - component: {fileID: 378348240}
   - component: {fileID: 378348238}
   - component: {fileID: 378348239}
-  m_Layer: 9
-  m_Name: SoldierEnemy
+  m_Layer: 8
+  m_Name: ServerSoldier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1047,7 +1047,7 @@ Animator:
   m_GameObject: {fileID: 9058643688556373487}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: fcb334eb247ae3e488abb081c847cf09, type: 3}
-  m_Controller: {fileID: 9100000, guid: 92d9309ff3a1f4daf93fde4a0deba10c, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1067,13 +1067,13 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 3.36
-  m_Radius: 0.55
+  m_Height: 2.4
+  m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.0001
-  m_Center: {x: 0, y: 0.04, z: 0}
+  m_Center: {x: 0, y: 1.2, z: 0}
 --- !u!114 &378348238
 MonoBehaviour:
   m_ObjectHideFlags: 0
