@@ -57,3 +57,11 @@ cuando agachado sea true.
 * Comandos para correr app en mac:
        - xattr -cr pathToApp.app
        - chmod -R +x pathToApp/Contents/MacOs
+       
+* Agregar animacion enemigo
+* Agregar los prefabs en clientManager y en ServerManager
+* Agregar la vida
+* Agregar menu de pausa
+* Agregar muerte del jugador y play again
+* Agregar latencia, entre 0 y 0.5 seg con el boton L podria ser y R para volver a 0
+* Fixear el line rendering y la pantalla de damage.
