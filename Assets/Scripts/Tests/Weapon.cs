@@ -37,7 +37,7 @@ public class Weapon
         GameObject bulletTrailEffect =
             GameObject.Instantiate(bulletTrail, shootPosition, Quaternion.identity);
         LineRenderer lineRenderer = bulletTrail.GetComponent<LineRenderer>();
-        lineRenderer.SetPosition(0, shootPosition);
+        lineRenderer.SetPosition(0, shootPosition + new Vector3(0.2f, 0f, 0f));
         lineRenderer.SetPosition(1, hitPosition);
         GameObject.Destroy(bulletTrailEffect, 1f);
     }

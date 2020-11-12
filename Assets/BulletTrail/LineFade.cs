@@ -7,7 +7,7 @@ namespace Bolt.AdvancedTutorial
 	{
 		[SerializeField] private Color color;
 
-        [SerializeField] private float speed = 100f;
+        [SerializeField] private float speed = 0.1f;
 
 		LineRenderer lr;
 

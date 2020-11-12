@@ -8,6 +8,8 @@ public class ClientManager : MonoBehaviour
     [SerializeField] private GameObject clientPrefab;
     [SerializeField] private GameObject simulationPrefab;
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private GameObject bulletTrailPrefab;
+
     
     private Rigidbody cubeServerRigidBody;
     private int packetsPerSecond = 60;
@@ -73,7 +75,7 @@ public class ClientManager : MonoBehaviour
         GameConfig.IncrementPlayerQuantity();
         int portNumber = clientId + 9000 + random.Next(0, 500);
         SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
-            serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab);
+            serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab, bulletTrailPrefab);
         this.client = client;
         Debug.Log("Sending join event");
         SendPlayerJoinEvent(clientId);
