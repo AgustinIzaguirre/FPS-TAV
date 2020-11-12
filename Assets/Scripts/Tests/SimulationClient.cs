@@ -10,6 +10,7 @@ public class SimulationClient
     private GameObject clientPrefab;
     private GameObject simulationPrefab;
     private GameObject enemyPrefab;
+    private GameObject bulletTrailPrefab;
 
     private float xRotation = 0f;
     
@@ -45,7 +46,8 @@ public class SimulationClient
     private Weapon weapon;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab)
+        IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
+        GameObject bulletTrailPrefab)
     {
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
@@ -63,6 +65,7 @@ public class SimulationClient
         this.id = id;
         this.serverEndPoint = serverEndPoint;
         this.clientPrefab = clientPrefab;
+        this.bulletTrailPrefab = bulletTrailPrefab;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
@@ -545,7 +548,7 @@ public class SimulationClient
             simulationGravityController = playerPrediction.GetComponent<GravityController>();
             playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
             weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
-                playerCamera.GetComponent<MuzzleFlash>());
+                playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
                 players[id].playerGameObject.GetComponent<Collider>());
     }
@@ -571,6 +574,8 @@ public class SimulationClient
                 targetId = hit.transform.GetComponent<EnemyInfo>().GetId();
                 Debug.Log("hit player = " + targetId);
             }
+
+            weapon.SpawnBullet(playerCamera.transform.position, hit.point);
         }
 
         return targetId;
