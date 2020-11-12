@@ -66,3 +66,4 @@ cuando agachado sea true.
 * Agregar latencia, entre 0 y 0.5 seg con el boton L podria ser y R para volver a 0
 * Fixear el line rendering y la pantalla de damage.
 * Refactorear codigo y estructura del proyecto
+* Hacer un README con lo que hace cada clase
