@@ -314,7 +314,7 @@ public class SimulationClient
             int targetId = Shoot();
             if (targetId >= 0)
             {
-                Debug.Log("Sending shoot event");
+                Debug.Log("Sending shoot event hit player = " + targetId);
                 shootEventNumber++;
                 SendShootEventToServer(new ShootEvent(id, targetId, clientTime, shootEventNumber));
             }

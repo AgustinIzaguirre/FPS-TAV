@@ -1015,7 +1015,7 @@ GameObject:
   - component: {fileID: 378348238}
   - component: {fileID: 378348239}
   m_Layer: 9
-  m_Name: Soldier
+  m_Name: SoldierEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1067,8 +1067,8 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 2.4
-  m_Radius: 0.4
+  m_Height: 2.9
+  m_Radius: 0.55
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08

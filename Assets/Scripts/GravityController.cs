@@ -24,25 +24,25 @@ public class GravityController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (id == 10)
-        {
-            Debug.Log("Applying gravity");
-        }
+//        if (id == 10)
+//        {
+//            Debug.Log("Applying gravity");
+//        }
         if (controller.isGrounded)
         {
-            if (id == 10)
-            {
-                Debug.Log("Player is grounded");
-            }
+//            if (id == 10)
+//            {
+//                Debug.Log("Player is grounded");
+//            }
 
             verticalVelocity = 0;
             isJumping = false;
         }
         else
         {
-            if (id == 10) {
-                Debug.Log("Player is falling");
-            }
+//            if (id == 10) {
+//                Debug.Log("Player is falling");
+//            }
             time += Time.fixedDeltaTime;
             verticalVelocity = startVelocity - gravity * time;
         }
