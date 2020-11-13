@@ -32,12 +32,13 @@ public class Weapon
         return false;
     }
 
-    public void SpawnBullet(Vector3 shootPosition, Vector3 hitPosition)
+    public void SpawnBullet(Vector3 hitPosition)
     {
+        Vector3 shootPosition = muzzleFlash.GetShootPosition();
         GameObject bulletTrailEffect =
             GameObject.Instantiate(bulletTrail, shootPosition, Quaternion.identity);
         LineRenderer lineRenderer = bulletTrail.GetComponent<LineRenderer>();
-        lineRenderer.SetPosition(0, shootPosition + new Vector3(0.2f, 0f, 0f));
+        lineRenderer.SetPosition(0, shootPosition);
         lineRenderer.SetPosition(1, hitPosition);
         GameObject.Destroy(bulletTrailEffect, 1f);
     }
