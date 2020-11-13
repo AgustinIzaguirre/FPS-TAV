@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.49360597, g: 0.5704134, b: 0.6390955, a: 1}
+  m_IndirectSpecularColor: {r: 0.4953733, g: 0.5718814, b: 0.6396618, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &4
 LightmapSettings:
@@ -8129,7 +8129,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &437221179
 GameObject:
@@ -32447,7 +32447,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1868602544
 GameObject:
@@ -35757,7 +35757,7 @@ MonoBehaviour:
     type: 3}
   simulationPrefab: {fileID: 2940356322965701842, guid: e4ddd54a8f2134037bfabd50912a0009,
     type: 3}
-  enemyPrefab: {fileID: 2940356322965701842, guid: 4965ba5fd77cd498281e2928bffc754d,
+  enemyPrefab: {fileID: 9058643688556373487, guid: 05e6767526d804a9a92b9a5d2bc2e27a,
     type: 3}
   bulletTrailPrefab: {fileID: 1930985349805526, guid: d2ec70c814159504cb3e12e99b00b151,
     type: 3}
@@ -37222,7 +37222,7 @@ PrefabInstance:
     - target: {fileID: 8246231825013683315, guid: d0e6c9a9ba6a84299bf726ace36aa418,
         type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8246231825013683315, guid: d0e6c9a9ba6a84299bf726ace36aa418,
         type: 3}

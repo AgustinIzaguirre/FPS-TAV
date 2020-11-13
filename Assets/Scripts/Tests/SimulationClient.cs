@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using Tests;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using Object = UnityEngine.Object;
 
 public class SimulationClient
 {
@@ -19,6 +21,7 @@ public class SimulationClient
     private CharacterController predictionController;
     private GravityController gravityController;
     private GravityController simulationGravityController;
+    private DamageScreenController damageScreenController;
     private Channel channel;
     private List<GameInput> sentInputs;
     private List<GameInput> appliedInputs;
@@ -117,10 +120,17 @@ public class SimulationClient
                             PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
                             RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                             lastServerInput = lastInput;
+                            Debug.Log("Prediction = " + predictionEntity.position.y);
+                            Debug.Log("Current = " + playerEntity.position.y);
                             if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                             {
                                 Debug.Log("Not equals");
-                                players[id].playerGameObject.transform.position = playerPrediction.transform.position;
+                                Vector3 newPosition = playerPrediction.transform.position;
+                                if (Math.Abs(playerPrediction.transform.position.y - players[id].playerGameObject.transform.position.y) <= 1.0f)
+                                {
+                                    newPosition.y = players[id].playerGameObject.transform.position.y;
+                                }
+                                players[id].playerGameObject.transform.position = newPosition;
                             }
 
                         }
@@ -314,7 +324,7 @@ public class SimulationClient
             int targetId = Shoot();
             if (targetId >= 0)
             {
-                Debug.Log("Sending shoot event");
+                Debug.Log("Sending shoot event hit player = " + targetId);
                 shootEventNumber++;
                 SendShootEventToServer(new ShootEvent(id, targetId, clientTime, shootEventNumber));
             }
@@ -491,8 +501,13 @@ public class SimulationClient
                     }
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
                     {
+                        damageScreenController.Activate();
                         Debug.Log("You Lost");
                         //TODO decide what to do when user is dead
+                    }
+                    else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
+                    {
+                        damageScreenController.Activate();
                     }
                 }
             }
@@ -549,6 +564,7 @@ public class SimulationClient
             playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
             weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
                 playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
+            damageScreenController = playerCamera.GetComponent<DamageScreenController>();
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
                 players[id].playerGameObject.GetComponent<Collider>());
     }
@@ -565,6 +581,8 @@ public class SimulationClient
 
     public int Shoot()
     {
+        damageScreenController.Activate();
+
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
