@@ -22,6 +22,7 @@ public class SimulationClient
     private GravityController gravityController;
     private GravityController simulationGravityController;
     private DamageScreenController damageScreenController;
+    private HealthController healthController;
     private Channel channel;
     private List<GameInput> sentInputs;
     private List<GameInput> appliedInputs;
@@ -507,6 +508,8 @@ public class SimulationClient
                     }
                     else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
                     {
+                        players[playerId].life = currentWorldInfo.players[playerId].life;
+                        healthController.UpdateLife(players[playerId].life);
                         damageScreenController.Activate();
                     }
                 }
@@ -565,6 +568,7 @@ public class SimulationClient
             weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
                 playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
             damageScreenController = playerCamera.GetComponent<DamageScreenController>();
+            healthController = playerCamera.GetComponent<HealthController>();
             Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
                 players[id].playerGameObject.GetComponent<Collider>());
     }
@@ -582,7 +586,6 @@ public class SimulationClient
     public int Shoot()
     {
         damageScreenController.Activate();
-
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
