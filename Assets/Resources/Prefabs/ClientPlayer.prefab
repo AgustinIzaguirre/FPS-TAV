@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &2056738492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5436738703504862764}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa943f5e772f4fbd9873473b43dffa89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damageScreen: {fileID: 4769419828577862440}
+  damageColor: {r: 1, g: 0, b: 0, a: 1}
+  colorSmoothness: 0.5
 --- !u!1001 &4769419829222035506
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15,17 +30,17 @@ PrefabInstance:
     - target: {fileID: 4798488456284598587, guid: 4965ba5fd77cd498281e2928bffc754d,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.2513762
+      value: 1.1398787
       objectReference: {fileID: 0}
     - target: {fileID: 4798488456284598587, guid: 4965ba5fd77cd498281e2928bffc754d,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.92
+      value: 0.00000044207422
       objectReference: {fileID: 0}
     - target: {fileID: 4798488456284598587, guid: 4965ba5fd77cd498281e2928bffc754d,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.6952324
+      value: -0.8005204
       objectReference: {fileID: 0}
     - target: {fileID: 4798488456284598587, guid: 4965ba5fd77cd498281e2928bffc754d,
         type: 3}
@@ -67,5 +82,31 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 980243224, guid: 4965ba5fd77cd498281e2928bffc754d, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 980243226, guid: 4965ba5fd77cd498281e2928bffc754d, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4965ba5fd77cd498281e2928bffc754d, type: 3}
+--- !u!1 &5436738703504862764 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 667464147272580638, guid: 4965ba5fd77cd498281e2928bffc754d,
+    type: 3}
+  m_PrefabInstance: {fileID: 4769419829222035506}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4769419828577862440 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 980243226, guid: 4965ba5fd77cd498281e2928bffc754d,
+    type: 3}
+  m_PrefabInstance: {fileID: 4769419829222035506}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
