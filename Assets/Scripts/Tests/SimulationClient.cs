@@ -596,7 +596,7 @@ public class SimulationClient
                 Debug.Log("hit player = " + targetId);
             }
 
-            weapon.SpawnBullet(playerCamera.transform.position, hit.point);
+            weapon.SpawnBullet(hit.point);
         }
 
         return targetId;
