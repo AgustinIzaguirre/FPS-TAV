@@ -1,57 +1,25 @@
-* Chequear desde el server no mandar ack de algo que ya mande, preguntar
-* Hacer que el cliente cree los objetos clientes cuando recibe el ack de que uno se unio al juego //DONE
-* Hacer que el server setie el id de los jugadores // Done
-* Hacer que el server mande la info del mundo a los jugadores. // Done
-* Sacar el cliente hardcodeado  // Done
-* Sacar todo lo de cubeEntity de snapshot tanto en cliente, como servidor como en la clase //DONE
-* Hacer el flujo joinevent, server manda ack solo a ese con el id. Server manda a todos los mensajes de se unio tal jugador esperando el ack de respuesta.
-nuevo player manda request del estado del juego, server manda world info // Done
 * Comprimir la cantidad de jugadores y el tipo de paquete
-* Hacer que el cliente actual no hace interpolacion sino que guarda los inputs y ejecuta desde el ultimo que recibio. //DONE
-* Si la info no coincide con el servidor, para mi caso voy a hacer que se transporte a la del servidor. //DONE
-* Probar hacer el free de los paquetes cuando amndo tambien a ver si sigue andando. //DONE
-* Pasar a character controller
-* Preguntar lo de fixed update y lo de mandar input en cada uno.
-* Probar los build de server y cliente
 * Probar si el servidor aplica los inputs mas de una vez si le llegan repetidos. //DONE
 * Refactorear los inputs para que se identifiquen y si me llegan viejos no los aplique constantemente. //Done
-* Cambiar el apply inputs de simulation client para que aplique las lista si es que hace falta, pero creo que no porque aplica de a uno.
-* Hacer lo de fixed update
-* El character controller saca rigidbody
 * Una clase por arriba que todo el tiempo absorve los paquetes y mandando los ack y arriba de eso el tiene la clase del server que utiliza los inputs para procesar.
-* El GetKey() en vez del GetKeyDown(), Las acciones como saltos o eventos esos si buscarlos en el Update y agregarlos a una cola pero los de movimeinto, en el FixedUpdate.
 * Podemos asignar siempre el de la prediccion si queremos, en vez de la comparacion.
 A considerar capaz conviene.
-* En update solo se guarda en la cola y ejecuto y envio en fixedUpdate
-* La fuerza multiplicarla por fixed delta time
-* Hacer que el input de rotacion sea un input en si mismo.
-* Cambiar el input game que tanga un bit indicando si es float o int y que tenga un value y float value, y en el serialize serializo y deserializo en funcion de eso
-* Ademas cuando es rotacion se manda como un nuevo input.
-* Terminar el menu y adaptar el SimulationTest para que haga el build.
 * La prediccion moverla en el FixedUpdate
-* El hit ejecutarlo en el update. //DONE
 * El inicializar al jugador en todo el lugar posible evitando adentro del cuadrado que no se puede.
-* Ajustar el collider del character controller al modelo que use
 * Chequear que un mismo cliente no se conecte mas de una vez
 * Mirar el sequence si es incremental por cliente o uno por cada worldInfo y despues mirar como se usa del lado del cliente
 * Hacer que no se pueda conectar varias veces un mismo cliente(guardar los endpoints de los clientes)
-* TODO refactor worldInfo, agregando una nueva clase que tenga toda la info del jugador a su vex renombrar todo lo que
-dice Cube y unificar la info tanto en client como server y ver si reemplaza ClientInfo //DONE
-* TODO un bool de esta disparando o no el jugador para mostrar la animacion // DONE
 
 Animaciones
 * De los otros personajes la animacion es parte del estado, entonces lo que hay que hacer es que en el snapshot se envie el estado del jugador, para la animacion
 * Cuando abris el animator a la izquierda esta layers y parameters, podes crear un boolean agachado, corriendo, etc Le llevas una flechita de anyState a agachado
 cuando agachado sea true.
 
-* En el worldInfo solo tener un diccionario del id a PlayerInfo //DONE
-* En el server sacar clientInfo y playerCubes y activePlayers y cambiarlo por un unico PlayerInfo. // DONE
-
 * Agregar lo de la animacion de que se muere un enemigo y eliminar el game objext tanto server como cliente
 * Decidir que hacer cuando matan al jugador.
-* Preguntar como hacer para que en un update me tome un solo click y no varios.
 
-* Hacer una clase wrapper de weapon que dispare cada cierto time rate con el boton presionado.
+----------------------------------------------------------------------------------------------------------------------
+
 * Capaz hacer que el server envie tal jugador disparo a tal confiable.
 
 * Comandos para correr app en mac:
@@ -59,11 +27,12 @@ cuando agachado sea true.
        - chmod -R +x pathToApp/Contents/MacOs
        
 * Agregar animacion enemigo
-* Agregar los prefabs en clientManager y en ServerManager
-* Agregar la vida
+* Agregar los prefabs en clientManager y en ServerManager //DONE
+* Agregar la vida //DONE
 * Agregar menu de pausa
 * Agregar muerte del jugador y play again
 * Agregar latencia, entre 0 y 0.5 seg con el boton L podria ser y R para volver a 0
-* Fixear el line rendering y la pantalla de damage.
+* Fixear el line rendering
+* Hacer la pantalla de damage. //DONE 
 * Refactorear codigo y estructura del proyecto
 * Hacer un README con lo que hace cada clase

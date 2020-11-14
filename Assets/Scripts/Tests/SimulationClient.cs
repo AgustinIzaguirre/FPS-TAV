@@ -31,6 +31,7 @@ public class SimulationClient
     private List<Snapshot> interpolationBuffer;
     private List<GameInput> inputsToExecute;
     private Dictionary<int, PlayerInfo> players;
+    private Dictionary<int, EnemyAnimatorController> enemyAnimators;
     private GameObject playerPrediction;
     private int lastInputSent;
     private int lastInputRemoved;
@@ -56,6 +57,7 @@ public class SimulationClient
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
         players = new Dictionary<int, PlayerInfo>();
+        enemyAnimators = new Dictionary<int, EnemyAnimatorController>();
         sentInputs = new List<GameInput>();
         appliedInputs = new List<GameInput>();
         sentEvents = new List<GameEvent>();
@@ -482,10 +484,11 @@ public class SimulationClient
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
-                            players[playerId].MarkAsDead();
-                            GameObject.Destroy(players[playerId].playerGameObject);
-                            
-                            // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
+                            if (players[playerId].isAlive)
+                            {
+                                players[playerId].MarkAsDead();
+                                enemyAnimators[playerId].Kill();
+                            }
                         }
                         else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
@@ -498,6 +501,7 @@ public class SimulationClient
                                 nextPlayerEntity,
                                 startTime, endTime, clientTime, players[playerId].playerGameObject);
                             interpolatedPlayer.Apply();
+                            enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
                         }
                     }
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
@@ -579,13 +583,14 @@ public class SimulationClient
         Quaternion rotation = Quaternion.Euler(playerObject.eulerAngles);
         GameObject playerGameobject = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
         EnemyInfo enemyInfo = playerGameobject.GetComponent<EnemyInfo>();
+        enemyAnimators[playerId] = new EnemyAnimatorController(playerGameobject.GetComponent<Animator>());
         enemyInfo.SetId(playerId);
         players[playerId] = new PlayerInfo(playerId, new PlayerEntity(playerGameobject), true);
     }
 
     public int Shoot()
     {
-        damageScreenController.Activate();
+//        damageScreenController.Activate();
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))

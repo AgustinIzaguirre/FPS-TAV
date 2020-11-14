@@ -99,4 +99,14 @@ public class GameInput
         }
         return inputsToExecute;
     }
+
+    public int GetInputIntValue()
+    {
+        if (intputValueType == InputValueType.INTEGER_VALUE)
+        {
+            return value;
+        } 
+        return 0;
+        
+    }
 }
