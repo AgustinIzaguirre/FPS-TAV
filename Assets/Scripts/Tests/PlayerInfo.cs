@@ -19,6 +19,7 @@ public class PlayerInfo
     public bool isActive;
     public bool isAlive;
     public PlayerEntity playerEntity;
+    public AnimationStates animationState;
 
     public PlayerInfo(int id, IPEndPoint endPoint)
     {
@@ -31,10 +32,11 @@ public class PlayerInfo
         isActive = false;
         playerEntity = null;
         isAlive = true;
+        animationState = AnimationStates.IDDLE;
     }
 
     public PlayerInfo(int playerId, int playerLastAppliedInput, PlayerEntity currentPlayerEntity, float playerLife,
-        float playerDamage, bool isPlayerShooting, bool isAlive)
+        float playerDamage, bool isPlayerShooting, AnimationStates animationState, bool isAlive)
     {
         id = playerId;
         lastInputApplied = playerLastAppliedInput;
@@ -48,6 +50,7 @@ public class PlayerInfo
         life = playerLife;
         damage = playerDamage;
         isShooting = isPlayerShooting;
+        this.animationState = animationState;
         this.isAlive = isAlive;
         this.isActive = isAlive;
     }
@@ -63,6 +66,7 @@ public class PlayerInfo
         isShooting = false;
         this.isActive = isActive;
         isAlive = true;
+        animationState = AnimationStates.IDDLE;
     }
 
     public void SetPlayerGameObject(GameObject playerGameObject)
@@ -112,7 +116,8 @@ public class PlayerInfo
         FloatSerializer.SerializeFloat(buffer, life, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         FloatSerializer.SerializeFloat(buffer, damage, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
         int shootingValue = isShooting ? 1 : 0;
-        buffer.PutInt(shootingValue, 0, 1); 
+        buffer.PutInt(shootingValue, 0, 1); //TODO remove shootingValue
+        buffer.PutInt((int)animationState, 0, 3);
     }
     
     public static PlayerInfo Deserialize(BitBuffer buffer)
@@ -129,13 +134,38 @@ public class PlayerInfo
         float playerLife = FloatSerializer.DeserializeFloat(buffer, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         float playerDamage = FloatSerializer.DeserializeFloat(buffer, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
         bool isPlayerShooting = buffer.GetInt(0, 1) == 1;
+        AnimationStates currentAnimationState = GetAnimationState(buffer.GetInt(0, 3));
         return new PlayerInfo(playerId, playerLastAppliedInput, currentPlayerEntity, playerLife, playerDamage,
-            isPlayerShooting, isPlayerAlive);
+            isPlayerShooting, currentAnimationState, isPlayerAlive);
+    }
+
+    private static AnimationStates GetAnimationState(int animationValue)
+    {
+        AnimationStates currentAnimationState = AnimationStates.IDDLE;
+        if (animationValue == 1)
+        {
+            currentAnimationState = AnimationStates.MOVE;
+        }
+        if (animationValue == 2)
+        {
+            currentAnimationState = AnimationStates.SHOOT;
+        }
+        if (animationValue == 3)
+        {
+            currentAnimationState = AnimationStates.DEAD;
+        }
+
+        return currentAnimationState;
     }
 
     public void MarkAsDead()
     {
         isAlive = false;
         isActive = false;
+    }
+
+    public void SetAnimationState(AnimationStates currentAnimationState)
+    {
+        animationState = currentAnimationState;
     }
 }
