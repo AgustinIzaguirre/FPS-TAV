@@ -118,25 +118,28 @@ public class SimulationClient
                         if (render)
                         {
                             Interpolate();
-
-                            CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
-                            PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
-                            PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
-                            RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
-                            lastServerInput = lastInput;
-                            Debug.Log("Prediction = " + predictionEntity.position.y);
-                            Debug.Log("Current = " + playerEntity.position.y);
-                            if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+                            if (isPlaying)
                             {
-                                Debug.Log("Not equals");
-                                Vector3 newPosition = playerPrediction.transform.position;
-                                if (Math.Abs(playerPrediction.transform.position.y - players[id].playerGameObject.transform.position.y) <= 1.0f)
+                                CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
+                                PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
+                                PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
+                                RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
+                                lastServerInput = lastInput;
+                                Debug.Log("Prediction = " + predictionEntity.position.y);
+                                Debug.Log("Current = " + playerEntity.position.y);
+                                if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                                 {
-                                    newPosition.y = players[id].playerGameObject.transform.position.y;
-                                }
-                                players[id].playerGameObject.transform.position = newPosition;
-                            }
+                                    Debug.Log("Not equals");
+                                    Vector3 newPosition = playerPrediction.transform.position;
+                                    if (Math.Abs(playerPrediction.transform.position.y -
+                                                 players[id].playerGameObject.transform.position.y) <= 1.0f)
+                                    {
+                                        newPosition.y = players[id].playerGameObject.transform.position.y;
+                                    }
 
+                                    players[id].playerGameObject.transform.position = newPosition;
+                                }
+                            }
                         }
 //                    }
                 }
@@ -480,7 +483,7 @@ public class SimulationClient
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    if (playerId != id)
+                    if (playerId != id && isPlaying)
                     {
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
@@ -508,9 +511,10 @@ public class SimulationClient
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
                     {
                         damageScreenController.Activate();
-                        SceneManager.LoadScene("EndGame");
-                        Debug.Log("You Lost");
-                        //TODO decide what to do when user is dead
+                        isPlaying = false;
+                        render = false;
+                        players[playerId].MarkAsDead();
+                        LoadEndGameScene();
                     }
                     else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
                     {
@@ -607,5 +611,14 @@ public class SimulationClient
         }
 
         return targetId;
+    }
+
+    public void LoadEndGameScene()
+    {
+        DestroyChannel();
+        Cursor.lockState = CursorLockMode.None;
+        SceneManager.LoadScene("EndGame");
+        Debug.Log("You Lost");
+        
     }
 }
