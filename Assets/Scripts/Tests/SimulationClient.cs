@@ -590,7 +590,7 @@ public class SimulationClient
 
     public int Shoot()
     {
-        damageScreenController.Activate();
+//        damageScreenController.Activate();
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
