@@ -127,11 +127,33 @@ public class SimulationServer
                  PlayerMotion.ApplyInputs(0, inputsToApply[clientId],
                      playerObject.GetComponent<CharacterController>(),
                      playerObject.GetComponent<GravityController>(), clientTransform);
+                 int lastInputApplied = 0;
+                 if (inputsToApply[clientId].Count > 0)
+                 {
+                     lastInputApplied = inputsToApply[clientId][inputsToApply[clientId].Count - 1].GetInputIntValue();
+                 }
+                 players[clientId].animationState = GetAnimationState(lastInputApplied);
                  inputsToApply[clientId].Clear();
              }
          }
      }
-     
+
+     private AnimationStates GetAnimationState(int lastInputApplied)
+     {
+         AnimationStates currentAnimationState = AnimationStates.IDDLE;
+         if (lastInputApplied == (int)InputType.LEFT || lastInputApplied == (int)InputType.RIGHT ||
+             lastInputApplied == (int)InputType.FORWARD || lastInputApplied == (int)InputType.BACKWARD)
+         {
+             currentAnimationState = AnimationStates.MOVE;
+         }
+         else if (lastInputApplied == (int) InputType.SHOOT)
+         {
+             currentAnimationState = AnimationStates.SHOOT;
+         }
+
+         return currentAnimationState;
+     }
+
      private void ReceivePackets()
     {
         var packet = channel.GetPacket();
