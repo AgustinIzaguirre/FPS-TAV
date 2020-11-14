@@ -484,8 +484,11 @@ public class SimulationClient
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
-                            players[playerId].MarkAsDead();
-                            enemyAnimators[playerId].Kill();
+                            if (players[playerId].isAlive)
+                            {
+                                players[playerId].MarkAsDead();
+                                enemyAnimators[playerId].Kill();
+                            }
 //                            GameObject.Destroy(players[playerId].playerGameObject);
                             
                             // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
