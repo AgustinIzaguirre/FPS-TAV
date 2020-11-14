@@ -5,6 +5,7 @@ using Tests;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 public class SimulationClient
@@ -507,6 +508,7 @@ public class SimulationClient
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
                     {
                         damageScreenController.Activate();
+                        SceneManager.LoadScene("EndGame");
                         Debug.Log("You Lost");
                         //TODO decide what to do when user is dead
                     }
