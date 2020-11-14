@@ -31,6 +31,7 @@ public class SimulationClient
     private List<Snapshot> interpolationBuffer;
     private List<GameInput> inputsToExecute;
     private Dictionary<int, PlayerInfo> players;
+    private Dictionary<int, EnemyAnimatorController> enemyAnimators;
     private GameObject playerPrediction;
     private int lastInputSent;
     private int lastInputRemoved;
@@ -56,6 +57,7 @@ public class SimulationClient
         channel = new Channel(portNumber);
         interpolationBuffer = new List<Snapshot>();
         players = new Dictionary<int, PlayerInfo>();
+        enemyAnimators = new Dictionary<int, EnemyAnimatorController>();
         sentInputs = new List<GameInput>();
         appliedInputs = new List<GameInput>();
         sentEvents = new List<GameEvent>();
@@ -483,7 +485,8 @@ public class SimulationClient
                         {
                             Debug.Log("Player " + playerId + " is dead on client");
                             players[playerId].MarkAsDead();
-                            GameObject.Destroy(players[playerId].playerGameObject);
+                            enemyAnimators[playerId].Kill();
+//                            GameObject.Destroy(players[playerId].playerGameObject);
                             
                             // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
                         }
@@ -579,6 +582,7 @@ public class SimulationClient
         Quaternion rotation = Quaternion.Euler(playerObject.eulerAngles);
         GameObject playerGameobject = GameObject.Instantiate(enemyPrefab, position, rotation) as GameObject;
         EnemyInfo enemyInfo = playerGameobject.GetComponent<EnemyInfo>();
+        enemyAnimators[playerId] = new EnemyAnimatorController(playerGameobject.GetComponent<Animator>());
         enemyInfo.SetId(playerId);
         players[playerId] = new PlayerInfo(playerId, new PlayerEntity(playerGameobject), true);
     }

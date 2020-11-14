@@ -7,6 +7,10 @@ public class EnemyAnimatorController
     private static readonly int IsShooting = Animator.StringToHash("isShooting");
     private static readonly int IsDead = Animator.StringToHash("isDead");
 
+    public EnemyAnimatorController(Animator enemyAnimator)
+    {
+        this.enemyAnimator = enemyAnimator;
+    }
     public void StartShooting()
     {
         enemyAnimator.SetBool(IsShooting, true);
