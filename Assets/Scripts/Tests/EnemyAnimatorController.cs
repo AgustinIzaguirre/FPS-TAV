@@ -11,14 +11,14 @@ public class EnemyAnimatorController
     {
         this.enemyAnimator = enemyAnimator;
     }
-    public void StartShooting()
+    public void Shoot()
     {
         enemyAnimator.SetBool(IsShooting, true);
         enemyAnimator.SetBool(IsMoving, false);
         enemyAnimator.SetBool(IsDead, false);
     }
 
-    public void SetIdle()
+    public void Idle()
     {
         enemyAnimator.SetBool(IsMoving, false);
         enemyAnimator.SetBool(IsShooting, false);
@@ -37,5 +37,21 @@ public class EnemyAnimatorController
         enemyAnimator.SetBool(IsMoving, true);
         enemyAnimator.SetBool(IsShooting, false);
         enemyAnimator.SetBool(IsDead, false);
+    }
+
+    public void ApplyAnimation(AnimationStates animationState)
+    {
+        if (animationState == AnimationStates.MOVE)
+        {
+            Move();
+        }
+        else if (animationState == AnimationStates.SHOOT)
+        {
+            Shoot();
+        }
+        else
+        {
+            Idle();
+        }
     }
 }

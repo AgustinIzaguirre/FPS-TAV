@@ -489,9 +489,6 @@ public class SimulationClient
                                 players[playerId].MarkAsDead();
                                 enemyAnimators[playerId].Kill();
                             }
-//                            GameObject.Destroy(players[playerId].playerGameObject);
-                            
-                            // TODO trigger animation and after some time remove component and not from the dictionary of players because player keeps sending it with life 0
                         }
                         else if (currentWorldInfo.players.ContainsKey(playerId) &&
                             nextWorldInfo.players.ContainsKey(playerId) &&
@@ -504,6 +501,7 @@ public class SimulationClient
                                 nextPlayerEntity,
                                 startTime, endTime, clientTime, players[playerId].playerGameObject);
                             interpolatedPlayer.Apply();
+                            enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
                         }
                     }
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
