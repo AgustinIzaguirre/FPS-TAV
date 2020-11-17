@@ -50,6 +50,7 @@ public class SimulationClient
     public bool isPlaying;
     private IPEndPoint serverEndPoint;
     private Weapon weapon;
+    private bool isAlive;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
@@ -84,11 +85,15 @@ public class SimulationClient
         this.simulationPrefab = simulationPrefab;
         this.enemyPrefab = enemyPrefab;
         this.weapon = null;
+        isAlive = true;
     }
 
     public void UpdateClient()
     {
-        
+        if (!isAlive)
+        {
+            return;
+        }
         if (render)
         {
             clientTime += Time.deltaTime;
@@ -118,7 +123,12 @@ public class SimulationClient
                         if (render)
                         {
                             Interpolate();
-                            if (isPlaying)
+                            if (!isPlaying)
+                            {
+                                return;
+                            }
+
+                            if (currentSnapshot.worldInfo.players[id].playerEntity != null)
                             {
                                 CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
                                 PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
@@ -510,11 +520,8 @@ public class SimulationClient
                     }
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
                     {
-                        damageScreenController.Activate();
-                        isPlaying = false;
-                        render = false;
-                        players[playerId].MarkAsDead();
-                        LoadEndGameScene();
+                        KillPlayer();
+                        return;
                     }
                     else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
                     {
@@ -525,6 +532,16 @@ public class SimulationClient
                 }
             }
         }
+    }
+
+    private void KillPlayer()
+    {
+        isAlive = false; 
+        damageScreenController.Activate();
+        isPlaying = false;
+        render = false;
+        players[id].MarkAsDead();
+        LoadEndGameScene();
     }
 
     private void ResetBufferAndClientTime(float lastTime)
