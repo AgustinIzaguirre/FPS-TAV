@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/Hangar.unity
     guid: 9b19b9615260542d6b2ff524d811eca1
+  - enabled: 1
+    path: Assets/Scene/EndGame.unity
+    guid: 52dd588b5615046648019d94b30cc446
   m_configObjects: {}

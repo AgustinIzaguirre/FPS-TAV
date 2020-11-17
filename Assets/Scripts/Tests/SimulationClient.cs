@@ -5,6 +5,7 @@ using Tests;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 public class SimulationClient
@@ -49,6 +50,7 @@ public class SimulationClient
     public bool isPlaying;
     private IPEndPoint serverEndPoint;
     private Weapon weapon;
+    private bool isAlive;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
@@ -83,11 +85,15 @@ public class SimulationClient
         this.simulationPrefab = simulationPrefab;
         this.enemyPrefab = enemyPrefab;
         this.weapon = null;
+        isAlive = true;
     }
 
     public void UpdateClient()
     {
-        
+        if (!isAlive)
+        {
+            return;
+        }
         if (render)
         {
             clientTime += Time.deltaTime;
@@ -117,25 +123,33 @@ public class SimulationClient
                         if (render)
                         {
                             Interpolate();
-
-                            CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
-                            PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
-                            PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
-                            RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
-                            lastServerInput = lastInput;
-                            Debug.Log("Prediction = " + predictionEntity.position.y);
-                            Debug.Log("Current = " + playerEntity.position.y);
-                            if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+                            if (!isPlaying)
                             {
-                                Debug.Log("Not equals");
-                                Vector3 newPosition = playerPrediction.transform.position;
-                                if (Math.Abs(playerPrediction.transform.position.y - players[id].playerGameObject.transform.position.y) <= 1.0f)
-                                {
-                                    newPosition.y = players[id].playerGameObject.transform.position.y;
-                                }
-                                players[id].playerGameObject.transform.position = newPosition;
+                                return;
                             }
 
+                            if (currentSnapshot.worldInfo.players[id].playerEntity != null)
+                            {
+                                CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
+                                PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
+                                PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
+                                RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
+                                lastServerInput = lastInput;
+                                Debug.Log("Prediction = " + predictionEntity.position.y);
+                                Debug.Log("Current = " + playerEntity.position.y);
+                                if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+                                {
+                                    Debug.Log("Not equals");
+                                    Vector3 newPosition = playerPrediction.transform.position;
+                                    if (Math.Abs(playerPrediction.transform.position.y -
+                                                 players[id].playerGameObject.transform.position.y) <= 1.0f)
+                                    {
+                                        newPosition.y = players[id].playerGameObject.transform.position.y;
+                                    }
+
+                                    players[id].playerGameObject.transform.position = newPosition;
+                                }
+                            }
                         }
 //                    }
                 }
@@ -479,7 +493,7 @@ public class SimulationClient
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    if (playerId != id)
+                    if (playerId != id && isPlaying)
                     {
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
@@ -506,9 +520,8 @@ public class SimulationClient
                     }
                     else if (currentWorldInfo.players[playerId].life <= 0.001)
                     {
-                        damageScreenController.Activate();
-                        Debug.Log("You Lost");
-                        //TODO decide what to do when user is dead
+                        KillPlayer();
+                        return;
                     }
                     else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
                     {
@@ -519,6 +532,16 @@ public class SimulationClient
                 }
             }
         }
+    }
+
+    private void KillPlayer()
+    {
+        isAlive = false; 
+        damageScreenController.Activate();
+        isPlaying = false;
+        render = false;
+        players[id].MarkAsDead();
+        LoadEndGameScene();
     }
 
     private void ResetBufferAndClientTime(float lastTime)
@@ -605,5 +628,14 @@ public class SimulationClient
         }
 
         return targetId;
+    }
+
+    public void LoadEndGameScene()
+    {
+        DestroyChannel();
+        Cursor.lockState = CursorLockMode.None;
+        SceneManager.LoadScene("EndGame");
+        Debug.Log("You Lost");
+        
     }
 }
