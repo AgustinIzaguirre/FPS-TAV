@@ -128,6 +128,15 @@ public class SimulationClient
                                 return;
                             }
 
+                            if (currentSnapshot.worldInfo.players[id].GetAnimationState() == AnimationStates.MOVE)
+                            {
+                                Debug.Log("MOVE");
+                            }
+                            else if (currentSnapshot.worldInfo.players[id].GetAnimationState() == AnimationStates.SHOOT)
+                            {
+                                    Debug.Log("SHOOT");
+                            }
+
                             if (currentSnapshot.worldInfo.players[id].playerEntity != null)
                             {
                                 CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);

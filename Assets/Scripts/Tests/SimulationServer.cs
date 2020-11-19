@@ -103,7 +103,8 @@ public class SimulationServer
                      .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
              }
 
-             currentWorldInfo.AddPlayer(players[clientId]);
+             currentWorldInfo.AddPlayer(players[clientId].ClonePlayer());
+             players[clientId].SetAnimationState(AnimationStates.IDDLE);
          }
 
          return currentWorldInfo;
@@ -127,7 +128,7 @@ public class SimulationServer
                      lastInputApplied = inputsToApply[clientId][inputsToApply[clientId].Count - 1].GetInputIntValue();
                  }
 
-                 if (players[clientId].GetAnimationState() != AnimationStates.SHOOT)
+                 if (players[clientId].GetAnimationState() == AnimationStates.IDDLE)
                  {
                      players[clientId].SetAnimationState(GetAnimationState(lastInputApplied));
                  }
