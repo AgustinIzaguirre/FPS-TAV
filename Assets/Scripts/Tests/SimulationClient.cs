@@ -51,6 +51,8 @@ public class SimulationClient
     private IPEndPoint serverEndPoint;
     private Weapon weapon;
     private bool isAlive;
+    private float delay;
+    private float delayedTime;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
@@ -84,8 +86,10 @@ public class SimulationClient
         lastServerInput = 0;
         this.simulationPrefab = simulationPrefab;
         this.enemyPrefab = enemyPrefab;
-        this.weapon = null;
+        weapon = null;
         isAlive = true;
+        delay = 0f;
+        delayedTime = 0f;
     }
 
     public void UpdateClient()
@@ -360,15 +364,29 @@ public class SimulationClient
         {
             inputsToExecute.Add(new GameInput(jump, moveLeft, moveRight, moveForward, moveBackward));
         }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            delay = Math.Min(0.5f, delay + 0.1f);
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            delay = 0f;
+        }
     }
 
     public void ClientFixedUpdate()
     {
-        if (isPlaying)
+        delayedTime += Time.fixedDeltaTime;
+        if (delayedTime >= delay)
         {
-            SendInputToServer();
-            ResendShootEvents();
-            CheckForGameEvents();
+            delayedTime -= delay;
+            if (isPlaying)
+            {
+                SendInputToServer();
+                ResendShootEvents();
+                CheckForGameEvents();
+            }
         }
     }
     
