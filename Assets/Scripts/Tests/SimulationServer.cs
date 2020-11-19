@@ -79,7 +79,6 @@ public class SimulationServer
          
          foreach (var clientId in players.Keys)
          {
-//             Debug.Log("Sending world info to client= " + clientId);
              //serialize
              var packet = Packet.Obtain();
              sequence++;
@@ -96,7 +95,6 @@ public class SimulationServer
          WorldInfo currentWorldInfo = new WorldInfo();
          foreach (var clientId in players.Keys)
          {
-//             Debug.Log("Sending snapshot for client = " + clientId);
              if (players[clientId].isActive)
              {
                  float clientVelocity = players[clientId].GetPlayerGameObject().GetComponent<GravityController>()
@@ -105,11 +103,8 @@ public class SimulationServer
                      .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
              }
 
-             currentWorldInfo.AddPlayer(players[clientId]);
-//             if (clientId == 2)
-//             {
-//                 Debug.Log("Client lastInput on server = " + currentWorldInfo.players[clientId].lastInputApplied);
-//             }
+             currentWorldInfo.AddPlayer(players[clientId].ClonePlayer());
+             players[clientId].SetAnimationState(AnimationStates.IDDLE);
          }
 
          return currentWorldInfo;
@@ -132,7 +127,12 @@ public class SimulationServer
                  {
                      lastInputApplied = inputsToApply[clientId][inputsToApply[clientId].Count - 1].GetInputIntValue();
                  }
-                 players[clientId].animationState = GetAnimationState(lastInputApplied);
+
+                 if (players[clientId].GetAnimationState() == AnimationStates.IDDLE)
+                 {
+                     players[clientId].SetAnimationState(GetAnimationState(lastInputApplied));
+                 }
+
                  inputsToApply[clientId].Clear();
              }
          }
@@ -146,11 +146,6 @@ public class SimulationServer
          {
              currentAnimationState = AnimationStates.MOVE;
          }
-         else if (lastInputApplied == (int) InputType.SHOOT)
-         {
-             currentAnimationState = AnimationStates.SHOOT;
-         }
-
          return currentAnimationState;
      }
 
@@ -182,10 +177,6 @@ public class SimulationServer
                         inputsToApply[clientId].Add(inputsToExecute[i]);
                     }
                     currentPlayer.lastInputApplied = ackNumber;
-//                    if (clientId == 2)
-//                    {
-//                        Debug.Log("client = " + clientId + " last input applied = " + currentPlayer.lastInputApplied);
-//                    }
                 }
             }
             else if (packetType == (int) PacketType.EVENT)
@@ -205,6 +196,7 @@ public class SimulationServer
                 if (players[clientId].isActive)
                 {
                     PlayerInfo currentClient = players[clientId];
+                    currentClient.SetAnimationState(AnimationStates.SHOOT);
                     ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
                     if (!lastShotApplied.ContainsKey(clientId) ||
                         lastShotApplied[clientId] < currentShootEvent.shootEventNumber)

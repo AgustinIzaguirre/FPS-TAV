@@ -130,7 +130,6 @@ public class PlayerInfo
         {
             currentPlayerEntity = PlayerEntity.DeserializeInfo(buffer);
         }
-
         float playerLife = FloatSerializer.DeserializeFloat(buffer, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         float playerDamage = FloatSerializer.DeserializeFloat(buffer, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
         bool isPlayerShooting = buffer.GetInt(0, 1) == 1;
@@ -167,5 +166,15 @@ public class PlayerInfo
     public void SetAnimationState(AnimationStates currentAnimationState)
     {
         animationState = currentAnimationState;
+    }
+    
+    public AnimationStates GetAnimationState()
+    {
+        return animationState;
+    }
+
+    public PlayerInfo ClonePlayer()
+    {
+        return new PlayerInfo(id, lastInputApplied, playerEntity, life, damage, isShooting, animationState, isAlive);
     }
 }
