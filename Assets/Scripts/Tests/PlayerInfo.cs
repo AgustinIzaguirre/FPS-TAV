@@ -168,4 +168,9 @@ public class PlayerInfo
     {
         animationState = currentAnimationState;
     }
+    
+    public AnimationStates GetAnimationState()
+    {
+        return animationState;
+    }
 }

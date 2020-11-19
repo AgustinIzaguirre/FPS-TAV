@@ -135,11 +135,9 @@ public class SimulationClient
                                 PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
                                 RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
                                 lastServerInput = lastInput;
-                                Debug.Log("Prediction = " + predictionEntity.position.y);
-                                Debug.Log("Current = " + playerEntity.position.y);
                                 if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
                                 {
-                                    Debug.Log("Not equals");
+//                                    Debug.Log("Not equals");
                                     Vector3 newPosition = playerPrediction.transform.position;
                                     if (Math.Abs(playerPrediction.transform.position.y -
                                                  players[id].playerGameObject.transform.position.y) <= 1.0f)
@@ -177,7 +175,6 @@ public class SimulationClient
                 }
                 else if (packetType == (int) PacketType.SHOOT_EVENT)
                 {
-                    Debug.Log("Receiving ack of shoot event");
                     int ackNumber = packet.buffer.GetInt();
                     for (int i = 0; i < sentShootEvents.Count; i++)
                     {
@@ -186,7 +183,6 @@ public class SimulationClient
                             sentShootEvents.RemoveAt(i);
                         }
                     }
-                    Debug.Log("Shoot event list size = " + sentShootEvents.Count);
                 }
             }
             if (packetType == (int) PacketType.NEW_PLAYER)
@@ -196,11 +192,11 @@ public class SimulationClient
                 int playerId = newPlayerEvent.playerId;
                 if (!players.ContainsKey(playerId))
                 {
-                    Debug.Log("New player: " + playerId);
+//                    Debug.Log("New player: " + playerId);
 
                     if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
                     {
-                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
+//                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
                         if (id == playerId)
                         {
                             Spawn(newPlayerEvent.newPlayer);
@@ -226,7 +222,7 @@ public class SimulationClient
                             SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
                         }
                     }
-                    Debug.Log("Client instantiated");
+//                    Debug.Log("Client instantiated");
                     isPlaying = true;
                     players[id].ActivatePlayer();
                     SendAck((int) PacketType.START_INFO, id);
@@ -341,7 +337,7 @@ public class SimulationClient
             int targetId = Shoot();
             if (targetId >= 0)
             {
-                Debug.Log("Sending shoot event hit player = " + targetId);
+//                Debug.Log("Sending shoot event hit player = " + targetId);
                 shootEventNumber++;
                 SendShootEventToServer(new ShootEvent(id, targetId, clientTime, shootEventNumber));
             }
@@ -497,7 +493,7 @@ public class SimulationClient
                     {
                         if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
-                            Debug.Log("Player " + playerId + " is dead on client");
+//                            Debug.Log("Player " + playerId + " is dead on client");
                             if (players[playerId].isAlive)
                             {
                                 players[playerId].MarkAsDead();
@@ -621,7 +617,7 @@ public class SimulationClient
             if (hit.transform.name.Contains("Enemy"))
             {
                 targetId = hit.transform.GetComponent<EnemyInfo>().GetId();
-                Debug.Log("hit player = " + targetId);
+//                Debug.Log("hit player = " + targetId);
             }
 
             weapon.SpawnBullet(hit.point);
@@ -635,7 +631,7 @@ public class SimulationClient
         DestroyChannel();
         Cursor.lockState = CursorLockMode.None;
         SceneManager.LoadScene("EndGame");
-        Debug.Log("You Lost");
+//        Debug.Log("You Lost");
         
     }
 }

@@ -96,7 +96,7 @@ public class PlayerEntity
             Math.Abs(position.y - otherPosition.y) > 1.0f ||
             Math.Abs(position.z - otherPosition.z) > positionThreshold)
         {
-            Debug.Log("Position not equal");
+//            Debug.Log("Position not equal");
             return false;
         }
         return true;
