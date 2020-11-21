@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -6,6 +7,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.PlayerLoop;
 using Debug = UnityEngine.Debug;
+using Random = UnityEngine.Random;
 
 public class SimulationServer
 {
@@ -166,7 +168,8 @@ public class SimulationServer
                     List<GameInput> inputsToExecute = GameInput.Deserialize(packet.buffer);
                     int ackNumber = packet.buffer.GetInt();
                     SendAck(ackNumber, PacketType.ACK, currentPlayer.endPoint);
-                    int firstInput = currentPlayer.lastInputApplied + 1 - startInput;
+                    int firstInput = Math.Max(currentPlayer.lastInputApplied + 1 - startInput, 0);
+                    //TODO what to do if input is not in order.
                     //TODO separate on function
                     if (inputsToApply[clientId] == null)
                     {
