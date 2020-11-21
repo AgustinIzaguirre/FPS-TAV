@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using Tests;
 using UnityEditor;
 using UnityEngine;
@@ -52,7 +53,6 @@ public class SimulationClient
     private Weapon weapon;
     private bool isAlive;
     private float delay;
-    private float delayedTime;
 
     public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
@@ -89,7 +89,6 @@ public class SimulationClient
         weapon = null;
         isAlive = true;
         delay = 0f;
-        delayedTime = 0f;
     }
 
     public void UpdateClient()
@@ -377,16 +376,11 @@ public class SimulationClient
 
     public void ClientFixedUpdate()
     {
-        delayedTime += Time.fixedDeltaTime;
-        if (delayedTime >= delay)
+        if (isPlaying)
         {
-            delayedTime -= delay;
-            if (isPlaying)
-            {
-                SendInputToServer();
-                ResendShootEvents();
-                CheckForGameEvents();
-            }
+            SendInputToServer();
+            ResendShootEvents();
+            CheckForGameEvents();
         }
     }
     
@@ -413,10 +407,16 @@ public class SimulationClient
         packet.buffer.PutInt(lastInputRemoved + 1);
         GameInput.Serialize(sentInputs, lastInputSent, packet.buffer);
         packet.buffer.Flush();
-        channel.Send(packet, serverEndPoint);
-        packet.Free();
+        SendWithDelay(packet, serverEndPoint, (int)(delay * 1000));
+//        channel.Send(packet, serverEndPoint);
+//        packet.Free();
         // lastClientInput - lastInputSent because it can send one or two inputs depending on rotation
         lastInputSent += (lastClientInput - lastInputSent) + actionInputsize;
+    }
+
+    private void SendWithDelay(Packet packet, IPEndPoint destination, int delayTimeInMs)
+    {
+        Task.Delay(delayTimeInMs).ContinueWith(t=> channel.Send(packet, destination));
     }
 
     private void ResendShootEvents()

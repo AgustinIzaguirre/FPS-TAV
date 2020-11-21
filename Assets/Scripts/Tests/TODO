@@ -37,3 +37,8 @@ cuando agachado sea true.
 * Refactorear codigo y estructura del proyecto
 * Hacer un README con lo que hace cada clase
 * Probar distintos PPS
+
+
+Los inputs del servidor estan llegando antes que los viejos, arreglar que pasa si el servidor recibe viejos
+Simulation Servere, receive packets linea 169, ignorar los viejos.
+Fijarse cuando se borran los inputs a enviar de parte del cliente, deberia ser despues del ack
