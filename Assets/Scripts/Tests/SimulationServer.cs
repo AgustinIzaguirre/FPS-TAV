@@ -161,6 +161,10 @@ public class SimulationServer
             if (packetType == (int) PacketType.INPUT)
             {
                 int clientId = packet.buffer.GetInt();
+                if (players[clientId] == null)
+                {
+                    Debug.Log("clientId" + clientId + "not in players");
+                }
                 if (players[clientId].isActive)
                 {
                     PlayerInfo currentPlayer = players[clientId];

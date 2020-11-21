@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class SimulationTest : MonoBehaviour
 {
@@ -17,11 +18,12 @@ public class SimulationTest : MonoBehaviour
     public float timeoutForEvents;
     private float timeToSend;
     private bool connected = true;
-    private Dictionary<int, SimulationClient> clients;
+    private Dictionary<int, Channel> clients;
     private List<JoinEvent> sentJoinEvents;
     private SimulationServer server;
     private int lastClientId;
     private float time;
+    private bool isClientSpawned;
     private IPEndPoint serverEndPoint;
     public GameMode gameMode = GameMode.BOTH;
 
@@ -33,23 +35,24 @@ public class SimulationTest : MonoBehaviour
             timeToSend = (float) 1 / (float) packetsPerSecond;
             timeoutForEvents = 1f;
             serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
-            clients = new Dictionary<int, SimulationClient>();
+            clients = new Dictionary<int, Channel>();
             sentJoinEvents = new List<JoinEvent>();
             lastClientId = 0;
             server = new SimulationServer(serverEndPoint, timeToSend, serverPrefab);
             Application.targetFrameRate = 60;
             time = 0f;
             Cursor.lockState = CursorLockMode.Locked;
+            isClientSpawned = false;
         }
     }
 
     private void OnDestroy() {
         if (gameMode == GameMode.BOTH)
         {
-            foreach (var client in clients.Values)
-            {
-                client.DestroyChannel();
-            }
+//            foreach (var client in clients.Values)
+//            {
+//                client.DestroyChannel();
+//            }
 
             server.DestroyChannel();
         }
@@ -59,11 +62,6 @@ public class SimulationTest : MonoBehaviour
     {
         if (gameMode == GameMode.BOTH)
         {
-            if (clients.Count > 0)
-            {
-                clients[1].ClientFixedUpdate();
-            }
-
             server.ServerFixedUpdate();
         }
     }
@@ -82,13 +80,30 @@ public class SimulationTest : MonoBehaviour
             {
                 server.UpdateServer();
             }
-
+            
             CheckIfClientJoined();
-
-            foreach (var client in clients.Values)
+            foreach(var clientId in clients.Keys)
             {
-                client.UpdateClient();
+                if (clientId != 1 || !isClientSpawned)
+                {
+                    ReceiveClientInfo(clientId);
+                }
             }
+        }
+    }
+    
+    private void ReceiveClientInfo(int clientId)
+    {
+        var packet = clients[clientId].GetPacket();
+        while (packet != null)
+        {
+            int packetType = packet.buffer.GetInt();
+            if (packetType == (int) PacketType.NEW_PLAYER)
+            {
+                AnalyzeNewPlayerEvent(packet);
+            }
+            packet.Free();
+            packet = clients[clientId].GetPacket();
         }
     }
 
@@ -108,8 +123,7 @@ public class SimulationTest : MonoBehaviour
         for (int i = 0; i < sentJoinEvents.Count; i++)
         {
             int currentClientId = sentJoinEvents[i].clientId;
-            SimulationClient currentClient = clients[currentClientId];
-            if (ReceiveClientJoinResponse(currentClient))
+            if (ReceiveClientJoinResponse(currentClientId))
             {
                 eventsToRemove.Add(i);
             }
@@ -121,10 +135,9 @@ public class SimulationTest : MonoBehaviour
         }
     }
 
-    private bool ReceiveClientJoinResponse(SimulationClient currentClient)
+    private bool ReceiveClientJoinResponse(int currentClientId)
     {
-        Channel clientChannel = currentClient.GetChannel();
-        var packet = clientChannel.GetPacket();
+        var packet = clients[currentClientId].GetPacket();
 
         while (packet != null)
         {
@@ -135,28 +148,24 @@ public class SimulationTest : MonoBehaviour
                 // TODO remove on production
                 if (clientId == 1)
                 {
-                    currentClient.id = clientId;
+                    ClientConfig.SetId(clientId);
                 }
-//                else
-//                {
-//                    currentClient.isPlaying = true;
-//                }
                 return true;
             }
             packet.Free();
-            packet = clientChannel.GetPacket();
+            packet = clients[currentClientId].GetPacket();
         }
         return false;
     }
 
     private void SendPlayerJoinEvent()
     {
-        // Add base player
         int clientId = lastClientId + 1;
         int portNumber = clientId + 9000;
-        SimulationClient client = new SimulationClient(portNumber, minSnapshots, timeToSend, timeoutForEvents, clientId,
-            serverEndPoint, clientPrefab, simulationPrefab, enemyPrefab, bulletTrailPrefab);
-        clients[clientId] = client;
+        clients[clientId] = new Channel(ClientConfig.GetPort());
+        ClientConfig.ConfigureClient(clientId, portNumber, timeToSend, minSnapshots, timeoutForEvents,
+            clients[clientId], bulletTrailPrefab);
+        Debug.Log("Sending join event");
         lastClientId++;
         SendPlayerJoinEvent(clientId);
     }
@@ -177,8 +186,43 @@ public class SimulationTest : MonoBehaviour
         packet.buffer.PutInt((int) PacketType.JOIN_GAME);
         packet.buffer.PutInt(clientId);
         packet.buffer.Flush();
-        clients[clientId].GetChannel().Send(packet, serverEndPoint);
+        clients[clientId].Send(packet, serverEndPoint);
         packet.Free();
         sentJoinEvents.Add(new JoinEvent(clientId, time));
+    }
+    
+    public void AnalyzeNewPlayerEvent(Packet packet)
+    {
+        NewPlayerEvent newPlayerEvent = NewPlayerEvent.Deserialize(packet.buffer);
+        int playerId = newPlayerEvent.playerId;
+        
+        if (ClientConfig.GetId() == playerId)
+        {
+            SpawnClient(newPlayerEvent.newPlayer);
+            SendAck((int) PacketType.NEW_PLAYER, playerId);
+        }
+    }
+    
+    private void SendAck(int packetType, int playerId)
+    {
+        var packet = Packet.Obtain();
+        packet.buffer.PutInt(packetType);
+        packet.buffer.PutInt(ClientConfig.GetId());
+        packet.buffer.PutInt(playerId);
+        packet.buffer.Flush();
+        clients[ClientConfig.GetId()].Send(packet, serverEndPoint);
+        packet.Free();    
+    }
+    
+    public void SpawnClient(PlayerEntity player)
+    {
+        Vector3 position = player.position;
+        Quaternion rotation = Quaternion.Euler(player.eulerAngles);
+        GameObject playerObject = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
+        ClientConfig.SetPlayerInfo(new PlayerInfo(ClientConfig.GetId(), new PlayerEntity(playerObject), false));
+        isClientSpawned = true;
+        ClientConfig.SetPlayerPrediction(Instantiate(simulationPrefab, position, rotation) as GameObject);
+        Physics.IgnoreCollision(ClientConfig.GetPlayerPrediction().GetComponent<Collider>(),
+            ClientConfig.GetPlayerInfo().playerGameObject.GetComponent<Collider>());
     }
 }

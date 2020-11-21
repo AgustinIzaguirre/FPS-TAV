@@ -9,17 +9,18 @@ using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-public class SimulationClient
+public class SimulationClient : MonoBehaviour
 {
-    private GameObject clientPrefab;
-    private GameObject simulationPrefab;
+    [SerializeField]
     private GameObject enemyPrefab;
-    private GameObject bulletTrailPrefab;
-
-    private float xRotation = 0f;
-    
+    [SerializeField]
     private Camera playerCamera;
+    [SerializeField]
     private CharacterController clientController;
+    
+    private float xRotation = 0f;
+
+    private GameObject bulletTrailPrefab;
     private CharacterController predictionController;
     private GravityController gravityController;
     private GravityController simulationGravityController;
@@ -39,16 +40,16 @@ public class SimulationClient
     private int lastInputRemoved;
     private int lastClientInput;
     private int lastServerInput;
-    private readonly int minSnapshots;
+    private int minSnapshots;
     private bool render;
     private float clientTime;
-    private readonly float timeToSend;
+    private float timeToSend;
     private float timeout;
     private int eventNumber;
     private int shootEventNumber;
-    public int id;
-    public bool isSpawned;
-    public bool isPlaying;
+    private int id;
+    private bool isSpawned;
+    private bool isPlaying;
     private IPEndPoint serverEndPoint;
     private Weapon weapon;
     private bool isAlive;
@@ -58,9 +59,54 @@ public class SimulationClient
         IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
         GameObject bulletTrailPrefab)
     {
-        channel = new Channel(portNumber);
+//        channel = new Channel(portNumber);
+//        interpolationBuffer = new List<Snapshot>();
+//        players = new Dictionary<int, PlayerInfo>();
+//        enemyAnimators = new Dictionary<int, EnemyAnimatorController>();
+//        sentInputs = new List<GameInput>();
+//        appliedInputs = new List<GameInput>();
+//        sentEvents = new List<GameEvent>();
+//        sentShootEvents = new List<ShootEvent>();
+//        inputsToExecute = new List<GameInput>();
+//        render = false;
+//        clientController = null;
+//        this.minSnapshots = minSnapshots;
+//        this.timeToSend = timeToSend;
+//        this.timeout = timeout;
+//        this.id = id;
+//        this.serverEndPoint = serverEndPoint;
+//        this.clientPrefab = clientPrefab;
+//        this.bulletTrailPrefab = bulletTrailPrefab;
+//        lastInputSent = 1;
+//        clientTime = 0f;
+//        eventNumber = 0;
+//        shootEventNumber = 0;
+//        isSpawned = false;
+//        isPlaying = false;
+//        lastClientInput = 0;
+//        lastServerInput = 0;
+//        this.simulationPrefab = simulationPrefab;
+//        this.enemyPrefab = enemyPrefab;
+//        weapon = null;
+//        isAlive = true;
+//        delay = 0f;
+    }
+
+    public void Start()
+    {
+        channel = ClientConfig.GetChannel();
+        minSnapshots = ClientConfig.GetMinSnapshots();
+        timeToSend = ClientConfig.GetTimeToSend();
+        timeout = ClientConfig.GetTimeout();
+        id = ClientConfig.GetId();
+        playerPrediction = ClientConfig.GetPlayerPrediction();
+        bulletTrailPrefab = ClientConfig.GetBulletTrailPrefab();
+        serverEndPoint = GameConfig.GetServerEndPoint();
+        predictionController = playerPrediction.GetComponent<CharacterController>();
+        simulationGravityController = playerPrediction.GetComponent<GravityController>();
         interpolationBuffer = new List<Snapshot>();
         players = new Dictionary<int, PlayerInfo>();
+        players[id] = ClientConfig.GetPlayerInfo();
         enemyAnimators = new Dictionary<int, EnemyAnimatorController>();
         sentInputs = new List<GameInput>();
         appliedInputs = new List<GameInput>();
@@ -69,13 +115,6 @@ public class SimulationClient
         inputsToExecute = new List<GameInput>();
         render = false;
         clientController = null;
-        this.minSnapshots = minSnapshots;
-        this.timeToSend = timeToSend;
-        this.timeout = timeout;
-        this.id = id;
-        this.serverEndPoint = serverEndPoint;
-        this.clientPrefab = clientPrefab;
-        this.bulletTrailPrefab = bulletTrailPrefab;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
@@ -84,14 +123,16 @@ public class SimulationClient
         isPlaying = false;
         lastClientInput = 0;
         lastServerInput = 0;
-        this.simulationPrefab = simulationPrefab;
-        this.enemyPrefab = enemyPrefab;
-        weapon = null;
+        weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
+            playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
+        damageScreenController = playerCamera.GetComponent<DamageScreenController>();
+        healthController = playerCamera.GetComponent<HealthController>();
         isAlive = true;
         delay = 0f;
+        
     }
 
-    public void UpdateClient()
+    public void Update()
     {
         if (!isAlive)
         {
@@ -205,15 +246,10 @@ public class SimulationClient
                 if (!players.ContainsKey(playerId))
                 {
 //                    Debug.Log("New player: " + playerId);
-
                     if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
                     {
 //                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
-                        if (id == playerId)
-                        {
-                            Spawn(newPlayerEvent.newPlayer);
-                        }
-                        else
+                        if (id != playerId)
                         {
                             SpawnPlayer(playerId, newPlayerEvent.newPlayer);
                         }
@@ -240,7 +276,6 @@ public class SimulationClient
                     SendAck((int) PacketType.START_INFO, id);
                 }
             }
-
             packet.Free();
             packet = channel.GetPacket();
         } 
@@ -344,7 +379,7 @@ public class SimulationClient
     private void GetUserActionInput()
     {
         bool jump = false, moveLeft = false, moveRight = false, moveForward = false, moveBackward = false;
-        if (Input.GetMouseButton(0) && weapon.Shoot(clientTime))
+        if (isAlive && Input.GetMouseButton(0) && weapon.Shoot(clientTime))
         {
             int targetId = Shoot();
             if (targetId >= 0)
@@ -383,7 +418,7 @@ public class SimulationClient
         }
     }
 
-    public void ClientFixedUpdate()
+    public void FixedUpdate()
     {
         if (isPlaying)
         {
@@ -417,8 +452,6 @@ public class SimulationClient
         GameInput.Serialize(sentInputs, lastInputSent, packet.buffer);
         packet.buffer.Flush();
         SendWithDelay(packet, serverEndPoint, (int)(delay * 1000));
-//        channel.Send(packet, serverEndPoint);
-//        packet.Free();
         // lastClientInput - lastInputSent because it can send one or two inputs depending on rotation
         lastInputSent += (lastClientInput - lastInputSent) + actionInputsize;
     }
@@ -611,26 +644,26 @@ public class SimulationClient
         channel.Disconnect();
     }
 
-    public void Spawn(PlayerEntity player)
-    {
-            Vector3 position = player.position;
-            Quaternion rotation = Quaternion.Euler(player.eulerAngles);
-            GameObject playerObject = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
-            players[id] = new PlayerInfo(id, new PlayerEntity(playerObject), false);
-            isSpawned = true;
-            clientController = players[id].playerGameObject.GetComponent<CharacterController>();
-            gravityController = players[id].playerGameObject.GetComponent<GravityController>();
-            playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
-            predictionController = playerPrediction.GetComponent<CharacterController>();
-            simulationGravityController = playerPrediction.GetComponent<GravityController>();
-            playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
-            weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
-                playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
-            damageScreenController = playerCamera.GetComponent<DamageScreenController>();
-            healthController = playerCamera.GetComponent<HealthController>();
-            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
-                players[id].playerGameObject.GetComponent<Collider>());
-    }
+//    public void Spawn(PlayerEntity player)
+//    {
+//            Vector3 position = player.position;
+//            Quaternion rotation = Quaternion.Euler(player.eulerAngles);
+//            GameObject playerObject = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
+//            players[id] = new PlayerInfo(id, new PlayerEntity(playerObject), false);
+//            isSpawned = true;
+//            clientController = players[id].playerGameObject.GetComponent<CharacterController>();
+//            gravityController = players[id].playerGameObject.GetComponent<GravityController>();
+//            playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
+//            predictionController = playerPrediction.GetComponent<CharacterController>();
+//            simulationGravityController = playerPrediction.GetComponent<GravityController>();
+//            playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
+//            weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
+//                playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
+//            damageScreenController = playerCamera.GetComponent<DamageScreenController>();
+//            healthController = playerCamera.GetComponent<HealthController>();
+//            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
+//                players[id].playerGameObject.GetComponent<Collider>());
+//    }
     
     public void SpawnPlayer(int playerId, PlayerEntity playerObject)
     {
@@ -645,7 +678,6 @@ public class SimulationClient
 
     public int Shoot()
     {
-//        damageScreenController.Activate();
         int targetId = -1;
         RaycastHit hit;
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hit))
@@ -667,7 +699,5 @@ public class SimulationClient
         DestroyChannel();
         Cursor.lockState = CursorLockMode.None;
         SceneManager.LoadScene("EndGame");
-//        Debug.Log("You Lost");
-        
     }
 }
