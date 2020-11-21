@@ -372,6 +372,15 @@ public class SimulationClient
         {
             delay = 0f;
         }
+        
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+        }
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }
     }
 
     public void ClientFixedUpdate()
