@@ -271,7 +271,11 @@ public class SimulationServer
                         removeIndex = i;
                     }
                 }
-                startInfoSent.RemoveAt(removeIndex);
+
+                if (removeIndex >= 0)
+                {
+                    startInfoSent.RemoveAt(removeIndex);
+                }
             }
             packet.Free();
             packet = channel.GetPacket();
