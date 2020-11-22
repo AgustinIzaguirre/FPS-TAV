@@ -104,7 +104,6 @@ public class SimulationServer
                  players[clientId]
                      .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
              }
-
              currentWorldInfo.AddPlayer(players[clientId].ClonePlayer());
              players[clientId].SetAnimationState(AnimationStates.IDDLE);
          }
@@ -161,6 +160,10 @@ public class SimulationServer
             if (packetType == (int) PacketType.INPUT)
             {
                 int clientId = packet.buffer.GetInt();
+                if (players[clientId] == null)
+                {
+                    Debug.Log("clientId" + clientId + "not in players");
+                }
                 if (players[clientId].isActive)
                 {
                     PlayerInfo currentPlayer = players[clientId];
@@ -220,25 +223,28 @@ public class SimulationServer
             else if (packetType == (int) PacketType.JOIN_GAME)
             {
                 int clientId = packet.buffer.GetInt();
-                clientId = lastClientId + 1;
-                Debug.Log("player " + clientId + " joining game");
-                lastClientId += 1;
                 var clientEndPoint = packet.fromEndPoint;
-                if (!players.ContainsKey(clientId))
+                if (!IsEndpointInUse(clientEndPoint))
                 {
-                    players[clientId] = new PlayerInfo(clientId, clientEndPoint);
-                    inputsToApply[clientId] = new List<GameInput>();
-                    SendAck(lastClientId, PacketType.JOIN_GAME, players[clientId].endPoint);
-                    GenerateNewPlayer(clientId);
-                    Debug.Log("Deactivate client = " + clientId);
-                    players[clientId].DeactivatePlayer();
+                    clientId = lastClientId + 1;
+                    Debug.Log("player " + clientId + " joining game");
+                    lastClientId += 1;
+                    if (!players.ContainsKey(clientId))
+                    {
+                        players[clientId] = new PlayerInfo(clientId, clientEndPoint);
+                        inputsToApply[clientId] = new List<GameInput>();
+                        SendAck(lastClientId, PacketType.JOIN_GAME, players[clientId].endPoint);
+                        GenerateNewPlayer(clientId);
+                        Debug.Log("Deactivate client = " + clientId);
+                        players[clientId].DeactivatePlayer();
+                    }
                 }
             }
             else if (packetType == (int) PacketType.NEW_PLAYER)
             {
                 int clientId = packet.buffer.GetInt();
                 int playerId = packet.buffer.GetInt();
-                int removeIndex = 0;
+                int removeIndex = -1;
                 for (int i = 0; i < newPlayerEventSent.Count; i++)
                 {
                     NewPlayerEvent currentEvent = newPlayerEventSent[i];
@@ -247,7 +253,12 @@ public class SimulationServer
                         removeIndex = i;
                     }
                 }
-                newPlayerEventSent.RemoveAt(removeIndex);
+
+                if (removeIndex >= 0)
+                {
+                    newPlayerEventSent.RemoveAt(removeIndex);
+                }
+
                 if (clientId == playerId && !players[clientId].isActive)
                 {
                     SendStartInfo(clientId);
@@ -267,12 +278,31 @@ public class SimulationServer
                         removeIndex = i;
                     }
                 }
-                startInfoSent.RemoveAt(removeIndex);
+
+                if (removeIndex >= 0)
+                {
+                    startInfoSent.RemoveAt(removeIndex);
+                }
             }
             packet.Free();
             packet = channel.GetPacket();
         }
     }
+
+     private bool IsEndpointInUse(IPEndPoint clientEndPoint)
+     {
+         foreach (var clientId in players.Keys)
+         {
+             if (players[clientId].endPoint.Equals(clientEndPoint))
+             {
+                 if (players[clientId].isAlive)
+                 {
+                     return true;
+                 }
+             }
+         }
+         return false;
+     }
 
      private void SendStartInfo(int destinationId)
      {
