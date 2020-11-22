@@ -103,9 +103,9 @@ public class SimulationServer
                      .GetVerticalVelocity();
                  players[clientId]
                      .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
-                 players[clientId].SetAnimationState(AnimationStates.IDDLE);
              }
              currentWorldInfo.AddPlayer(players[clientId].ClonePlayer());
+             players[clientId].SetAnimationState(AnimationStates.IDDLE);
          }
 
          return currentWorldInfo;
