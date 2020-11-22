@@ -554,41 +554,44 @@ public class SimulationClient : MonoBehaviour
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    if (playerId != id && isPlaying)
-                    {
-                        if (currentWorldInfo.players[playerId].life <= 0.001)
+                    if (players.ContainsKey(playerId)) {
+                        if (playerId != id && isPlaying)
                         {
-//                            Debug.Log("Player " + playerId + " is dead on client");
-                            if (players[playerId].isAlive)
+                            if (currentWorldInfo.players[playerId].life <= 0.001)
                             {
-                                players[playerId].MarkAsDead();
-                                enemyAnimators[playerId].Kill();
+//                            Debug.Log("Player " + playerId + " is dead on client");
+                                if (players[playerId].isAlive)
+                                {
+                                    players[playerId].MarkAsDead();
+                                    enemyAnimators[playerId].Kill();
+                                }
+                            }
+                            else if (currentWorldInfo.players.ContainsKey(playerId) &&
+                                     nextWorldInfo.players.ContainsKey(playerId) &&
+                                     players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
+                            {
+                                PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
+
+                                PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
+                                PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
+                                    nextPlayerEntity,
+                                    startTime, endTime, clientTime, players[playerId].playerGameObject);
+                                interpolatedPlayer.Apply();
+                                enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
                             }
                         }
-                        else if (currentWorldInfo.players.ContainsKey(playerId) &&
-                            nextWorldInfo.players.ContainsKey(playerId) &&
-                            players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
+                        else if (currentWorldInfo.players[playerId].life <= 0.001)
                         {
-                            PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
-
-                            PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
-                            PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
-                                nextPlayerEntity,
-                                startTime, endTime, clientTime, players[playerId].playerGameObject);
-                            interpolatedPlayer.Apply();
-                            enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
+                            KillPlayer();
+                            return;
                         }
-                    }
-                    else if (currentWorldInfo.players[playerId].life <= 0.001)
-                    {
-                        KillPlayer();
-                        return;
-                    }
-                    else if ((int)(currentWorldInfo.players[playerId].life + 0.5f) < (int)(players[playerId].life + 0.5f))
-                    {
-                        players[playerId].life = currentWorldInfo.players[playerId].life;
-                        healthController.UpdateLife(players[playerId].life);
-                        damageScreenController.Activate();
+                        else if ((int) (currentWorldInfo.players[playerId].life + 0.5f) <
+                                 (int) (players[playerId].life + 0.5f))
+                        {
+                            players[playerId].life = currentWorldInfo.players[playerId].life;
+                            healthController.UpdateLife(players[playerId].life);
+                            damageScreenController.Activate();
+                        }
                     }
                 }
             }
