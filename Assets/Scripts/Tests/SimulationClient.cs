@@ -262,7 +262,7 @@ public class SimulationClient : MonoBehaviour
                 WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
                 foreach (var playerId in worldInfo.players.Keys)
                 {
-                    if (playerId != id && !players.ContainsKey(playerId))
+                    if (playerId != id && !players.ContainsKey(playerId) && worldInfo.players[playerId].isAlive)
                     {
                         SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
                     }

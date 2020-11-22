@@ -103,10 +103,9 @@ public class SimulationServer
                      .GetVerticalVelocity();
                  players[clientId]
                      .SetPlayerEntity(new PlayerEntity(players[clientId].GetPlayerGameObject(), clientVelocity));
+                 players[clientId].SetAnimationState(AnimationStates.IDDLE);
              }
-
              currentWorldInfo.AddPlayer(players[clientId].ClonePlayer());
-             players[clientId].SetAnimationState(AnimationStates.IDDLE);
          }
 
          return currentWorldInfo;
@@ -242,7 +241,7 @@ public class SimulationServer
             {
                 int clientId = packet.buffer.GetInt();
                 int playerId = packet.buffer.GetInt();
-                int removeIndex = 0;
+                int removeIndex = -1;
                 for (int i = 0; i < newPlayerEventSent.Count; i++)
                 {
                     NewPlayerEvent currentEvent = newPlayerEventSent[i];
@@ -251,7 +250,12 @@ public class SimulationServer
                         removeIndex = i;
                     }
                 }
-                newPlayerEventSent.RemoveAt(removeIndex);
+
+                if (removeIndex >= 0)
+                {
+                    newPlayerEventSent.RemoveAt(removeIndex);
+                }
+
                 if (clientId == playerId && !players[clientId].isActive)
                 {
                     SendStartInfo(clientId);
