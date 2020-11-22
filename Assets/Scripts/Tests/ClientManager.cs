@@ -139,7 +139,7 @@ public class ClientManager : MonoBehaviour
         packet.buffer.PutInt((int) PacketType.JOIN_GAME);
         packet.buffer.PutInt(clientId);
         packet.buffer.Flush();
-        client.GetChannel().Send(packet, serverEndPoint);
+        ClientConfig.GetChannel().Send(packet, serverEndPoint);
         packet.Free();
         sentJoinEvents.Add(new JoinEvent(clientId, time));
     }

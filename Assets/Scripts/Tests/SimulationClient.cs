@@ -17,12 +17,14 @@ public class SimulationClient : MonoBehaviour
     private Camera playerCamera;
     [SerializeField]
     private CharacterController clientController;
+    [SerializeField]
+    private GravityController gravityController;
+
     
     private float xRotation = 0f;
 
     private GameObject bulletTrailPrefab;
     private CharacterController predictionController;
-    private GravityController gravityController;
     private GravityController simulationGravityController;
     private DamageScreenController damageScreenController;
     private HealthController healthController;
@@ -48,7 +50,6 @@ public class SimulationClient : MonoBehaviour
     private int eventNumber;
     private int shootEventNumber;
     private int id;
-    private bool isSpawned;
     private bool isPlaying;
     private IPEndPoint serverEndPoint;
     private Weapon weapon;
@@ -114,12 +115,10 @@ public class SimulationClient : MonoBehaviour
         sentShootEvents = new List<ShootEvent>();
         inputsToExecute = new List<GameInput>();
         render = false;
-        clientController = null;
         lastInputSent = 1;
         clientTime = 0f;
         eventNumber = 0;
         shootEventNumber = 0;
-        isSpawned = false;
         isPlaying = false;
         lastClientInput = 0;
         lastServerInput = 0;
@@ -260,21 +259,18 @@ public class SimulationClient : MonoBehaviour
             if (packetType == (int) PacketType.START_INFO)
             {
 //                Debug.Log("Receive Start Info");
-                if (isSpawned)
+                WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
+                foreach (var playerId in worldInfo.players.Keys)
                 {
-                    WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
-                    foreach (var playerId in worldInfo.players.Keys)
+                    if (playerId != id && !players.ContainsKey(playerId))
                     {
-                        if (playerId != id && !players.ContainsKey(playerId))
-                        {
-                            SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
-                        }
+                        SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
                     }
-//                    Debug.Log("Client instantiated");
-                    isPlaying = true;
-                    players[id].ActivatePlayer();
-                    SendAck((int) PacketType.START_INFO, id);
                 }
+//                    Debug.Log("Client instantiated");
+                isPlaying = true;
+                players[id].ActivatePlayer();
+                SendAck((int) PacketType.START_INFO, id);
             }
             packet.Free();
             packet = channel.GetPacket();

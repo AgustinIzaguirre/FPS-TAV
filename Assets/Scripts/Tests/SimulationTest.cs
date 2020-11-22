@@ -35,6 +35,7 @@ public class SimulationTest : MonoBehaviour
             timeToSend = (float) 1 / (float) packetsPerSecond;
             timeoutForEvents = 1f;
             serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9000);
+            GameConfig.SetServerEndPoint("127.0.0.1", 9000);
             clients = new Dictionary<int, Channel>();
             sentJoinEvents = new List<JoinEvent>();
             lastClientId = 0;
