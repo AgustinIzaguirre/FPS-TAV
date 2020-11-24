@@ -55,44 +55,7 @@ public class SimulationClient : MonoBehaviour
     private Weapon weapon;
     private bool isAlive;
     private float delay;
-
-    public SimulationClient(int portNumber, int minSnapshots, float timeToSend, float timeout, int id,
-        IPEndPoint serverEndPoint, GameObject clientPrefab, GameObject simulationPrefab, GameObject enemyPrefab,
-        GameObject bulletTrailPrefab)
-    {
-//        channel = new Channel(portNumber);
-//        interpolationBuffer = new List<Snapshot>();
-//        players = new Dictionary<int, PlayerInfo>();
-//        enemyAnimators = new Dictionary<int, EnemyAnimatorController>();
-//        sentInputs = new List<GameInput>();
-//        appliedInputs = new List<GameInput>();
-//        sentEvents = new List<GameEvent>();
-//        sentShootEvents = new List<ShootEvent>();
-//        inputsToExecute = new List<GameInput>();
-//        render = false;
-//        clientController = null;
-//        this.minSnapshots = minSnapshots;
-//        this.timeToSend = timeToSend;
-//        this.timeout = timeout;
-//        this.id = id;
-//        this.serverEndPoint = serverEndPoint;
-//        this.clientPrefab = clientPrefab;
-//        this.bulletTrailPrefab = bulletTrailPrefab;
-//        lastInputSent = 1;
-//        clientTime = 0f;
-//        eventNumber = 0;
-//        shootEventNumber = 0;
-//        isSpawned = false;
-//        isPlaying = false;
-//        lastClientInput = 0;
-//        lastServerInput = 0;
-//        this.simulationPrefab = simulationPrefab;
-//        this.enemyPrefab = enemyPrefab;
-//        weapon = null;
-//        isAlive = true;
-//        delay = 0f;
-    }
-
+    
     public void Start()
     {
         channel = ClientConfig.GetChannel();
@@ -150,131 +113,152 @@ public class SimulationClient : MonoBehaviour
         var packet = channel.GetPacket();
         while (packet != null)
         {
-            int packetType = packet.buffer.GetInt();
-            if (isPlaying)
-            {
-                if (packetType == (int) PacketType.SNAPSHOT)
-                {
-                    Snapshot currentSnapshot = new Snapshot();
-                    currentSnapshot.Deserialize(packet.buffer);
-                    // TODO seems to be failing when trying to get key from snapshot
-//                    if (currentSnapshot.worldInfo.playerAppliedInputs.ContainsKey(id))
-//                    {
-//                        Debug.Log("Receiving snapshot");
-                        int lastInput = currentSnapshot.worldInfo.players[id].lastInputApplied;
-                        AddToInterpolationBuffer(currentSnapshot);
-                        if (render)
-                        {
-                            Interpolate();
-                            if (!isPlaying)
-                            {
-                                return;
-                            }
-
-                            if (currentSnapshot.worldInfo.players[id].GetAnimationState() == AnimationStates.MOVE)
-                            {
-                                Debug.Log("MOVE");
-                            }
-                            else if (currentSnapshot.worldInfo.players[id].GetAnimationState() == AnimationStates.SHOOT)
-                            {
-                                    Debug.Log("SHOOT");
-                            }
-
-                            if (currentSnapshot.worldInfo.players[id].playerEntity != null)
-                            {
-                                CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
-                                PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
-                                PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
-                                RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
-                                lastServerInput = lastInput;
-                                if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
-                                {
-//                                    Debug.Log("Not equals");
-                                    Vector3 newPosition = playerPrediction.transform.position;
-                                    if (Math.Abs(playerPrediction.transform.position.y -
-                                                 players[id].playerGameObject.transform.position.y) <= 1.0f)
-                                    {
-                                        newPosition.y = players[id].playerGameObject.transform.position.y;
-                                    }
-
-                                    players[id].playerGameObject.transform.position = newPosition;
-                                }
-                            }
-                        }
-//                    }
-                }
-                else if (packetType == (int) PacketType.ACK)
-                {
-                    int ackNumber = packet.buffer.GetInt();
-                    int quantity = ackNumber - lastInputRemoved;
-                    lastInputRemoved = quantity > 0 ? lastInputRemoved + quantity : lastInputRemoved;
-                    while (quantity > 0)
-                    {
-                        sentInputs.RemoveAt(0);
-                        quantity -= 1;
-                    }
-                }
-                else if (packetType == (int) PacketType.EVENT)
-                {
-                    int ackNumber = packet.buffer.GetInt();
-                    for (int i = 0; i < sentEvents.Count; i++)
-                    {
-                        if (ackNumber == sentEvents[i].eventNumber)
-                        {
-                            sentEvents.RemoveAt(i);
-                        }
-                    }
-                }
-                else if (packetType == (int) PacketType.SHOOT_EVENT)
-                {
-                    int ackNumber = packet.buffer.GetInt();
-                    for (int i = 0; i < sentShootEvents.Count; i++)
-                    {
-                        if (ackNumber == sentShootEvents[i].shootEventNumber)
-                        {
-                            sentShootEvents.RemoveAt(i);
-                        }
-                    }
-                }
-            }
-            if (packetType == (int) PacketType.NEW_PLAYER)
-            {
-//                TODO check if already has player
-                NewPlayerEvent newPlayerEvent = NewPlayerEvent.Deserialize(packet.buffer);
-                int playerId = newPlayerEvent.playerId;
-                if (!players.ContainsKey(playerId))
-                {
-//                    Debug.Log("New player: " + playerId);
-                    if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
-                    {
-//                        Debug.Log("Enters if id = " + id + ", receivedId = " + playerId);
-                        if (id != playerId)
-                        {
-                            SpawnPlayer(playerId, newPlayerEvent.newPlayer);
-                        }
-                    }
-                }
-                SendAck((int) PacketType.NEW_PLAYER, playerId);
-            }
-            if (packetType == (int) PacketType.START_INFO)
-            {
-//                Debug.Log("Receive Start Info");
-                WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
-                foreach (var playerId in worldInfo.players.Keys)
-                {
-                    if (playerId != id && !players.ContainsKey(playerId) && worldInfo.players[playerId].isAlive)
-                    {
-                        SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
-                    }
-                }
-//                    Debug.Log("Client instantiated");
-                isPlaying = true;
-                players[id].ActivatePlayer();
-                SendAck((int) PacketType.START_INFO, id);
-            }
+            PacketDispatcher(packet);
             packet.Free();
             packet = channel.GetPacket();
         } 
+    }
+
+    private void PacketDispatcher(Packet packet)
+    {
+        int packetType = packet.buffer.GetInt();
+        if (isPlaying)
+        {
+            if (packetType == (int) PacketType.SNAPSHOT)
+            {
+                HandleSnapshotMessage(packet);
+            }
+            else if (packetType == (int) PacketType.ACK)
+            {
+                HandleACKMessage(packet);
+            }
+            else if (packetType == (int) PacketType.EVENT)
+            {
+                HandleEventMessage(packet);
+            }
+            else if (packetType == (int) PacketType.SHOOT_EVENT)
+            {
+                HandleShootEvent(packet);
+            }
+        }
+        if (packetType == (int) PacketType.NEW_PLAYER)
+        {
+            HandleNewPlayerMessage(packet);
+        }
+        if (packetType == (int) PacketType.START_INFO)
+        {
+            HandleStartInfoMessage(packet);
+        }
+    }
+
+    private void HandleStartInfoMessage(Packet packet)
+    {
+        WorldInfo worldInfo = WorldInfo.Deserialize(packet.buffer);
+        foreach (var playerId in worldInfo.players.Keys)
+        {
+            if (playerId != id && !players.ContainsKey(playerId) && worldInfo.players[playerId].isAlive)
+            {
+                SpawnPlayer(playerId, worldInfo.players[playerId].playerEntity);
+            }
+        }
+        isPlaying = true;
+        players[id].ActivatePlayer();
+        SendAck((int) PacketType.START_INFO, id);
+    }
+
+    private void HandleNewPlayerMessage(Packet packet)
+    {
+        NewPlayerEvent newPlayerEvent = NewPlayerEvent.Deserialize(packet.buffer);
+        int playerId = newPlayerEvent.playerId;
+        if (!players.ContainsKey(playerId))
+        {
+            if (GameConfig.GetGameMode() != GameMode.BOTH || id == 1)
+            {
+                if (id != playerId)
+                {
+                    SpawnPlayer(playerId, newPlayerEvent.newPlayer);
+                }
+            }
+        }
+        SendAck((int) PacketType.NEW_PLAYER, playerId);
+    }
+
+    private void HandleShootEvent(Packet packet)
+    {
+        int ackNumber = packet.buffer.GetInt();
+        for (int i = 0; i < sentShootEvents.Count; i++)
+        {
+            if (ackNumber == sentShootEvents[i].shootEventNumber)
+            {
+                sentShootEvents.RemoveAt(i);
+            }
+        }
+    }
+
+    private void HandleEventMessage(Packet packet)
+    {
+       int ackNumber = packet.buffer.GetInt();
+       for (int i = 0; i < sentEvents.Count; i++)
+       {
+           if (ackNumber == sentEvents[i].eventNumber)
+           {
+               sentEvents.RemoveAt(i);
+           }
+       }
+    }
+
+    private void HandleACKMessage(Packet packet)
+    {
+        int ackNumber = packet.buffer.GetInt();
+        int quantity = ackNumber - lastInputRemoved;
+        lastInputRemoved = quantity > 0 ? lastInputRemoved + quantity : lastInputRemoved;
+        while (quantity > 0)
+        {
+            sentInputs.RemoveAt(0);
+            quantity -= 1;
+        }
+    }
+
+    private void HandleSnapshotMessage(Packet packet)
+    {
+        Snapshot currentSnapshot = new Snapshot();
+        currentSnapshot.Deserialize(packet.buffer);
+        AddToInterpolationBuffer(currentSnapshot);
+        if (render)
+        {
+            Interpolate();
+            if (!isPlaying)
+            {
+                return;
+            }
+            PredictPlayer(currentSnapshot);
+        }
+    }
+
+
+    private void PredictPlayer(Snapshot currentSnapshot)
+    {
+        int lastInput = currentSnapshot.worldInfo.players[id].lastInputApplied;
+
+        if (currentSnapshot.worldInfo.players[id].playerEntity != null)
+        {
+            CalculatePrediction(currentSnapshot.worldInfo.players[id].playerEntity);
+            PlayerEntity predictionEntity = new PlayerEntity(playerPrediction);
+            PlayerEntity playerEntity = new PlayerEntity(players[id].playerGameObject);
+            RemoveInputsFromList(lastServerInput, lastInput, appliedInputs);
+            lastServerInput = lastInput;
+            if (!predictionEntity.IsEqual(playerEntity, 0.2f, 50))
+            {
+                Vector3 newPosition = playerPrediction.transform.position;
+                if (Math.Abs(playerPrediction.transform.position.y -
+                             players[id].playerGameObject.transform.position.y) <= 1.0f)
+                {
+                    newPosition.y = players[id].playerGameObject.transform.position.y;
+                }
+
+                players[id].playerGameObject.transform.position = newPosition;
+            }
+        }
     }
 
     private void RemoveInputsFromList(int start, int end, List<GameInput> list)
@@ -288,7 +272,6 @@ public class SimulationClient : MonoBehaviour
 
     private void CalculatePrediction(PlayerEntity serverPlayer)
     {
-//        Debug.Log("Calculating prediction");
         playerPrediction.transform.position = serverPlayer.position;
         playerPrediction.transform.eulerAngles = serverPlayer.eulerAngles;
         int quantity = lastClientInput - lastServerInput;
@@ -380,7 +363,6 @@ public class SimulationClient : MonoBehaviour
             int targetId = Shoot();
             if (targetId >= 0)
             {
-//                Debug.Log("Sending shoot event hit player = " + targetId);
                 shootEventNumber++;
                 SendShootEventToServer(new ShootEvent(id, targetId, clientTime, shootEventNumber));
             }
@@ -428,7 +410,6 @@ public class SimulationClient : MonoBehaviour
     {
         var packet = Packet.Obtain();
         
-        // TODO Maybe separate in function
         Transform transform = players[id].playerGameObject.transform;
         int actionInputsize = inputsToExecute.Count;
         foreach (var input in inputsToExecute)
@@ -519,6 +500,7 @@ public class SimulationClient : MonoBehaviour
             }
         }
     }
+    
     private GameEvent GetGameEvent()
     {
         GameEvent currentEvent = null;
@@ -554,47 +536,55 @@ public class SimulationClient : MonoBehaviour
             {
                 foreach (var playerId in currentWorldInfo.players.Keys)
                 {
-                    if (players.ContainsKey(playerId)) {
-                        if (playerId != id && isPlaying)
-                        {
-                            if (currentWorldInfo.players[playerId].life <= 0.001)
-                            {
-//                            Debug.Log("Player " + playerId + " is dead on client");
-                                if (players[playerId].isAlive)
-                                {
-                                    players[playerId].MarkAsDead();
-                                    enemyAnimators[playerId].Kill();
-                                }
-                            }
-                            else if (currentWorldInfo.players.ContainsKey(playerId) &&
-                                     nextWorldInfo.players.ContainsKey(playerId) &&
-                                     players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
-                            {
-                                PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
-
-                                PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
-                                PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
-                                    nextPlayerEntity,
-                                    startTime, endTime, clientTime, players[playerId].playerGameObject);
-                                interpolatedPlayer.Apply();
-                                enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
-                            }
-                        }
-                        else if (currentWorldInfo.players[playerId].life <= 0.001)
-                        {
-                            KillPlayer();
-                            return;
-                        }
-                        else if ((int) (currentWorldInfo.players[playerId].life + 0.5f) <
-                                 (int) (players[playerId].life + 0.5f))
-                        {
-                            players[playerId].life = currentWorldInfo.players[playerId].life;
-                            healthController.UpdateLife(players[playerId].life);
-                            damageScreenController.Activate();
-                        }
+                    if (players.ContainsKey(playerId))
+                    {
+                        InterpolatePlayer(playerId, currentWorldInfo, next, startTime, endTime);
                     }
                 }
             }
+        }
+    }
+
+    private void InterpolatePlayer(int playerId, WorldInfo currentWorldInfo, Snapshot next, float startTime,
+        float endTime)
+    {
+        WorldInfo nextWorldInfo = next.worldInfo;
+
+        if (playerId != id && isPlaying)
+        {
+            if (currentWorldInfo.players[playerId].life <= 0.001)
+            {
+                if (players[playerId].isAlive)
+                {
+                    players[playerId].MarkAsDead();
+                    enemyAnimators[playerId].Kill();
+                }
+            }
+            else if (currentWorldInfo.players.ContainsKey(playerId) &&
+                     nextWorldInfo.players.ContainsKey(playerId) &&
+                     players.ContainsKey(playerId) && next.worldInfo.players[playerId].isAlive)
+            {
+                PlayerEntity previousPlayerEntity = currentWorldInfo.players[playerId].playerEntity;
+
+                PlayerEntity nextPlayerEntity = nextWorldInfo.players[playerId].playerEntity;
+                PlayerEntity interpolatedPlayer = PlayerEntity.CreateInterpolated(previousPlayerEntity,
+                    nextPlayerEntity,
+                    startTime, endTime, clientTime, players[playerId].playerGameObject);
+                interpolatedPlayer.Apply();
+                enemyAnimators[playerId].ApplyAnimation(nextWorldInfo.players[playerId].animationState);
+            }
+        }
+        else if (currentWorldInfo.players[playerId].life <= 0.001)
+        {
+            KillPlayer();
+            return;
+        }
+        else if ((int) (currentWorldInfo.players[playerId].life + 0.5f) <
+                 (int) (players[playerId].life + 0.5f))
+        {
+            players[playerId].life = currentWorldInfo.players[playerId].life;
+            healthController.UpdateLife(players[playerId].life);
+            damageScreenController.Activate();
         }
     }
 
@@ -643,27 +633,6 @@ public class SimulationClient : MonoBehaviour
         channel.Disconnect();
     }
 
-//    public void Spawn(PlayerEntity player)
-//    {
-//            Vector3 position = player.position;
-//            Quaternion rotation = Quaternion.Euler(player.eulerAngles);
-//            GameObject playerObject = Object.Instantiate(clientPrefab, position, rotation) as GameObject;
-//            players[id] = new PlayerInfo(id, new PlayerEntity(playerObject), false);
-//            isSpawned = true;
-//            clientController = players[id].playerGameObject.GetComponent<CharacterController>();
-//            gravityController = players[id].playerGameObject.GetComponent<GravityController>();
-//            playerPrediction = GameObject.Instantiate(simulationPrefab, position, rotation) as GameObject;
-//            predictionController = playerPrediction.GetComponent<CharacterController>();
-//            simulationGravityController = playerPrediction.GetComponent<GravityController>();
-//            playerCamera = players[id].playerGameObject.GetComponentInChildren< Camera >();
-//            weapon = new Weapon(0.2f,  playerCamera.GetComponent<AudioSource>(),
-//                playerCamera.GetComponent<MuzzleFlash>(), bulletTrailPrefab);
-//            damageScreenController = playerCamera.GetComponent<DamageScreenController>();
-//            healthController = playerCamera.GetComponent<HealthController>();
-//            Physics.IgnoreCollision(playerPrediction.GetComponent<Collider>(),
-//                players[id].playerGameObject.GetComponent<Collider>());
-//    }
-    
     public void SpawnPlayer(int playerId, PlayerEntity playerObject)
     {
         Vector3 position = playerObject.position;
@@ -684,7 +653,6 @@ public class SimulationClient : MonoBehaviour
             if (hit.transform.name.Contains("Enemy"))
             {
                 targetId = hit.transform.GetComponent<EnemyInfo>().GetId();
-//                Debug.Log("hit player = " + targetId);
             }
 
             weapon.SpawnBullet(hit.point);
