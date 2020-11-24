@@ -156,138 +156,164 @@ public class SimulationServer
 
         while (packet != null)
         {
-            int packetType = packet.buffer.GetInt();
-            if (packetType == (int) PacketType.INPUT)
-            {
-                int clientId = packet.buffer.GetInt();
-                if (players[clientId] == null)
-                {
-                    Debug.Log("clientId" + clientId + "not in players");
-                }
-                if (players[clientId].isActive)
-                {
-                    PlayerInfo currentPlayer = players[clientId];
-                    int startInput = packet.buffer.GetInt();
-                    List<GameInput> inputsToExecute = GameInput.Deserialize(packet.buffer);
-                    int ackNumber = packet.buffer.GetInt();
-                    SendAck(ackNumber, PacketType.ACK, currentPlayer.endPoint);
-                    int firstInput = Math.Max(currentPlayer.lastInputApplied + 1 - startInput, 0);
-                    //TODO what to do if input is not in order.
-                    //TODO separate on function
-                    if (inputsToApply[clientId] == null)
-                    {
-                        inputsToApply[clientId] = new List<GameInput>();
-                    }
-                    for (int i = firstInput; i < inputsToExecute.Count; i++)
-                    {
-                        inputsToApply[clientId].Add(inputsToExecute[i]);
-                    }
-                    currentPlayer.lastInputApplied = ackNumber;
-                }
-            }
-            else if (packetType == (int) PacketType.EVENT)
-            {
-                 // handle event   
-                 int clientId = packet.buffer.GetInt();
-                 if (players[clientId].isActive)
-                 {
-                     PlayerInfo currentClient = players[clientId];
-                     GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
-                     SendAck(currentEvent.eventNumber, PacketType.EVENT, currentClient.endPoint);
-                 }
-            }
-            else if (packetType == (int) PacketType.SHOOT_EVENT)
-            {
-                int clientId = packet.buffer.GetInt();
-                if (players[clientId].isActive)
-                {
-                    PlayerInfo currentClient = players[clientId];
-                    currentClient.SetAnimationState(AnimationStates.SHOOT);
-                    ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
-                    if (!lastShotApplied.ContainsKey(clientId) ||
-                        lastShotApplied[clientId] < currentShootEvent.shootEventNumber)
-                    {
-                        lastShotApplied[clientId] = currentShootEvent.shootEventNumber;
-                        players[currentShootEvent.targetId].IsShootedBy(players[currentShootEvent.shooterId]);
-                        if (players[currentShootEvent.targetId].life <= 0.001f)
-                        {
-                            Debug.Log("Player " + currentShootEvent.targetId + " is dead");
-                            players[currentShootEvent.targetId].MarkAsDead();
-                            GameObject.Destroy(players[currentShootEvent.targetId].playerGameObject);
-                            //TODO delete gameObject from scene and not from dictionary so it keeps sending player with zero life and remove it if still have it   
-                        }
-                    }
-                    SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
-                }
-            }
-            else if (packetType == (int) PacketType.JOIN_GAME)
-            {
-                int clientId = packet.buffer.GetInt();
-                var clientEndPoint = packet.fromEndPoint;
-                if (!IsEndpointInUse(clientEndPoint))
-                {
-                    clientId = lastClientId + 1;
-                    Debug.Log("player " + clientId + " joining game");
-                    lastClientId += 1;
-                    if (!players.ContainsKey(clientId))
-                    {
-                        players[clientId] = new PlayerInfo(clientId, clientEndPoint);
-                        inputsToApply[clientId] = new List<GameInput>();
-                        SendAck(lastClientId, PacketType.JOIN_GAME, players[clientId].endPoint);
-                        GenerateNewPlayer(clientId);
-                        Debug.Log("Deactivate client = " + clientId);
-                        players[clientId].DeactivatePlayer();
-                    }
-                }
-            }
-            else if (packetType == (int) PacketType.NEW_PLAYER)
-            {
-                int clientId = packet.buffer.GetInt();
-                int playerId = packet.buffer.GetInt();
-                int removeIndex = -1;
-                for (int i = 0; i < newPlayerEventSent.Count; i++)
-                {
-                    NewPlayerEvent currentEvent = newPlayerEventSent[i];
-                    if (currentEvent.playerId == playerId && currentEvent.destinationId == clientId)
-                    {
-                        removeIndex = i;
-                    }
-                }
-
-                if (removeIndex >= 0)
-                {
-                    newPlayerEventSent.RemoveAt(removeIndex);
-                }
-
-                if (clientId == playerId && !players[clientId].isActive)
-                {
-                    SendStartInfo(clientId);
-                }
-            }
-            else if (packetType == (int) PacketType.START_INFO)
-            {
-                int clientId = packet.buffer.GetInt();
-                Debug.Log("Recieve Start info ACK from client: " + clientId);
-                players[clientId].ActivatePlayer();
-                Debug.Log("Activate player " + clientId);
-                int removeIndex = -1;
-                for (int i = 0; i < startInfoSent.Count; i++)
-                {
-                    if (startInfoSent[i].clientId == clientId)
-                    {
-                        removeIndex = i;
-                    }
-                }
-
-                if (removeIndex >= 0)
-                {
-                    startInfoSent.RemoveAt(removeIndex);
-                }
-            }
+            PacketDispatcher(packet);
             packet.Free();
             packet = channel.GetPacket();
         }
     }
+
+     private void PacketDispatcher(Packet packet)
+     {
+         int packetType = packet.buffer.GetInt();
+         if (packetType == (int) PacketType.INPUT)
+         {
+             HandleInputMessage(packet);
+         }
+         else if (packetType == (int) PacketType.EVENT)
+         {
+             HandleEventMessage(packet);
+         }
+         else if (packetType == (int) PacketType.SHOOT_EVENT)
+         {
+             HandleShootEventMessage(packet);
+         }
+         else if (packetType == (int) PacketType.JOIN_GAME)
+         {
+             HandleJoinGameMessage(packet);
+         }
+         else if (packetType == (int) PacketType.NEW_PLAYER)
+         {
+             HandleNewPlayerMessage(packet);
+         }
+         else if (packetType == (int) PacketType.START_INFO)
+         {
+             HandleStartInfoMessage(packet);
+         }
+     }
+
+     private void HandleStartInfoMessage(Packet packet)
+     {
+         int clientId = packet.buffer.GetInt();
+         Debug.Log("Recieve Start info ACK from client: " + clientId);
+         players[clientId].ActivatePlayer();
+         Debug.Log("Activate player " + clientId);
+         int removeIndex = -1;
+         for (int i = 0; i < startInfoSent.Count; i++)
+         {
+             if (startInfoSent[i].clientId == clientId)
+             {
+                 removeIndex = i;
+             }
+         }
+
+         if (removeIndex >= 0)
+         {
+             startInfoSent.RemoveAt(removeIndex);
+         }
+     }
+
+     private void HandleNewPlayerMessage(Packet packet)
+     {
+         int clientId = packet.buffer.GetInt();
+         int playerId = packet.buffer.GetInt();
+         int removeIndex = -1;
+         for (int i = 0; i < newPlayerEventSent.Count; i++)
+         {
+             NewPlayerEvent currentEvent = newPlayerEventSent[i];
+             if (currentEvent.playerId == playerId && currentEvent.destinationId == clientId)
+             {
+                 removeIndex = i;
+             }
+         }
+
+         if (removeIndex >= 0)
+         {
+             newPlayerEventSent.RemoveAt(removeIndex);
+         }
+
+         if (clientId == playerId && !players[clientId].isActive)
+         {
+             SendStartInfo(clientId);
+         }
+     }
+
+     private void HandleJoinGameMessage(Packet packet)
+     {
+         int clientId = packet.buffer.GetInt();
+         var clientEndPoint = packet.fromEndPoint;
+         if (!IsEndpointInUse(clientEndPoint))
+         {
+             clientId = lastClientId + 1;
+             Debug.Log("player " + clientId + " joining game");
+             lastClientId += 1;
+             if (!players.ContainsKey(clientId))
+             {
+                 players[clientId] = new PlayerInfo(clientId, clientEndPoint);
+                 inputsToApply[clientId] = new List<GameInput>();
+                 SendAck(lastClientId, PacketType.JOIN_GAME, players[clientId].endPoint);
+                 GenerateNewPlayer(clientId);
+                 Debug.Log("Deactivate client = " + clientId);
+                 players[clientId].DeactivatePlayer();
+             }
+         }
+     }
+
+     private void HandleShootEventMessage(Packet packet)
+     {
+         int clientId = packet.buffer.GetInt();
+         if (players[clientId].isActive)
+         {
+             PlayerInfo currentClient = players[clientId];
+             currentClient.SetAnimationState(AnimationStates.SHOOT);
+             ShootEvent currentShootEvent = ShootEvent.Deserialize(packet.buffer);
+             if (!lastShotApplied.ContainsKey(clientId) ||
+                 lastShotApplied[clientId] < currentShootEvent.shootEventNumber)
+             {
+                 lastShotApplied[clientId] = currentShootEvent.shootEventNumber;
+                 players[currentShootEvent.targetId].IsShootedBy(players[currentShootEvent.shooterId]);
+                 if (players[currentShootEvent.targetId].life <= 0.001f)
+                 {
+                     players[currentShootEvent.targetId].MarkAsDead();
+                     GameObject.Destroy(players[currentShootEvent.targetId].playerGameObject);
+                 }
+             }
+             SendAck(currentShootEvent.shootEventNumber, PacketType.SHOOT_EVENT, currentClient.endPoint);
+         }
+     }
+
+     private void HandleEventMessage(Packet packet)
+     {
+         int clientId = packet.buffer.GetInt();
+         if (players[clientId].isActive)
+         {
+             PlayerInfo currentClient = players[clientId];
+             GameEvent currentEvent = GameEvent.Deserialize(packet.buffer);
+             SendAck(currentEvent.eventNumber, PacketType.EVENT, currentClient.endPoint);
+         }
+     }
+
+     private void HandleInputMessage(Packet packet)
+     {
+        int clientId = packet.buffer.GetInt();
+        if (players[clientId] != null && players[clientId].isActive)
+        {
+            PlayerInfo currentPlayer = players[clientId];
+            int startInput = packet.buffer.GetInt();
+            List<GameInput> inputsToExecute = GameInput.Deserialize(packet.buffer);
+            int ackNumber = packet.buffer.GetInt();
+            SendAck(ackNumber, PacketType.ACK, currentPlayer.endPoint);
+            int firstInput = Math.Max(currentPlayer.lastInputApplied + 1 - startInput, 0);
+            if (inputsToApply[clientId] == null)
+            {
+                inputsToApply[clientId] = new List<GameInput>();
+            }
+            for (int i = firstInput; i < inputsToExecute.Count; i++)
+            {
+                inputsToApply[clientId].Add(inputsToExecute[i]);
+            }
+            currentPlayer.lastInputApplied = ackNumber;
+        }
+     }
 
      private bool IsEndpointInUse(IPEndPoint clientEndPoint)
      {
