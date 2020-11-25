@@ -40,6 +40,7 @@ public class SimulationServer
         serverTime = 0f;
         lastClientId = 0;
         eventTimeOut = 1f;
+        SpawnPositionGenerator.InitializeZones();
     }
     
      public void UpdateServer()
@@ -370,10 +371,12 @@ public class SimulationServer
 
      private void GenerateNewPlayer(int clientId)
      {
-         float xPosition = Random.Range(-4f, 4f);
-         float yPosition = 1f;
-         float zPosition = Random.Range(-4f, 4f);
-         Vector3 position = new Vector3(xPosition, yPosition, zPosition);
+         
+//         float xPosition = Random.Range(-4f, 4f);
+//         float yPosition = 1f;
+//         float zPosition = Random.Range(-4f, 4f);
+//         Vector3 position = new Vector3(xPosition, yPosition, zPosition);
+         Vector3 position = SpawnPositionGenerator.GetSpawningPosition();
          Quaternion rotation = Quaternion.Euler(Vector3.zero);
          GameObject newPlayer = GameObject.Instantiate(serverPrefab, position, rotation);
          players[clientId].SetPlayerGameObject(newPlayer);

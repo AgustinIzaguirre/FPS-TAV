@@ -29,15 +29,13 @@ cuando agachado sea true.
 * Agregar animacion enemigo // DONE
 * Agregar los prefabs en clientManager y en ServerManager //DONE
 * Agregar la vida //DONE
-* Agregar menu de pausa
-* Agregar muerte del jugador y play again
+* Agregar muerte del jugador y play again //DONE
 * Agregar latencia, entre 0 y 0.5 seg con el boton L podria ser y R para volver a 0 //DONE
 * Fixear el line rendering
 * Hacer la pantalla de damage. //DONE 
-* Refactorear codigo y estructura del proyecto
+* Refactorear codigo y estructura del proyecto //DONE
 * Hacer un README con lo que hace cada clase
 * Probar distintos PPS
-* Agregar numero de secuencia al shoot event
 
 
 Los inputs del servidor estan llegando antes que los viejos, arreglar que pasa si el servidor recibe viejos
