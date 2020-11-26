@@ -2,7 +2,7 @@
 
 # Most Relevant Classes Implementation
 
-## ClientSide
+## Client side
 
 ### ClientManager
     Handles client connection and spawns client object on scene
@@ -13,7 +13,7 @@
 ### ClientConfig
     Contains client start information, like client id, client port, channel, etc.
 
-## ServerSide
+## Server side
 
 ### ServerManager
     Handles server instantiation and handles server lifecycle methods(Update and FixedUpdate)
