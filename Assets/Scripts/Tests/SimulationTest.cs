@@ -146,7 +146,6 @@ public class SimulationTest : MonoBehaviour
             if (packetType == (int) PacketType.JOIN_GAME)
             {
                 int clientId = packet.buffer.GetInt();
-                // TODO remove on production
                 if (clientId == 1)
                 {
                     ClientConfig.SetId(clientId);

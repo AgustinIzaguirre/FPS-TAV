@@ -19,7 +19,6 @@ namespace Tests
         }
         
         public void Serialize(BitBuffer buffer) {
-            // TODO replace with enum to diferentiate snapshot from ack
             buffer.PutInt((int) PacketType.SNAPSHOT);
             buffer.PutInt(sequence);
             worldInfo.Serialize(buffer);
