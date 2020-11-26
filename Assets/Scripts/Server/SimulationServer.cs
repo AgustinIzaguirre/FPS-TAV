@@ -343,7 +343,7 @@ public class SimulationServer
          packet.buffer.Flush();
          channel.Send(packet, clientEndpoint);
          startInfoSent.Add(newPlayerEvent);
-         packet.Free(); //TODO check if remove
+         packet.Free();
      }
 
      private void SendNewPlayerEventToAllPlayers(int playerId, Vector3 position, Vector3 rotation)
@@ -366,16 +366,11 @@ public class SimulationServer
          packet.buffer.Flush();
          channel.Send(packet, clientEndpoint);
          newPlayerEventSent.Add(newPlayerEvent);
-         packet.Free();  // TODO check if remove
+         packet.Free();
      }
 
      private void GenerateNewPlayer(int clientId)
      {
-         
-//         float xPosition = Random.Range(-4f, 4f);
-//         float yPosition = 1f;
-//         float zPosition = Random.Range(-4f, 4f);
-//         Vector3 position = new Vector3(xPosition, yPosition, zPosition);
          Vector3 position = SpawnPositionGenerator.GetSpawningPosition();
          Quaternion rotation = Quaternion.Euler(Vector3.zero);
          GameObject newPlayer = GameObject.Instantiate(serverPrefab, position, rotation);

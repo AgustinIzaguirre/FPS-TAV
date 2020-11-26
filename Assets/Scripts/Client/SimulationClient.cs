@@ -423,7 +423,7 @@ public class SimulationClient : MonoBehaviour
         
         GetUserInputs(transform);
 
-        packet.buffer.PutInt((int) PacketType.INPUT); // TODO compress each packet type
+        packet.buffer.PutInt((int) PacketType.INPUT);
         packet.buffer.PutInt(id);
         packet.buffer.PutInt(lastInputRemoved + 1);
         GameInput.Serialize(sentInputs, lastInputSent, packet.buffer);

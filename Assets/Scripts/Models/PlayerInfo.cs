@@ -116,7 +116,7 @@ public class PlayerInfo
         FloatSerializer.SerializeFloat(buffer, life, (int)MIN_LIFE, (int)MAX_LIFE, 0.2f);
         FloatSerializer.SerializeFloat(buffer, damage, (int)MIN_DAMAGE, (int)MAX_DAMAGE, 0.2f);
         int shootingValue = isShooting ? 1 : 0;
-        buffer.PutInt(shootingValue, 0, 1); //TODO remove shootingValue
+        buffer.PutInt(shootingValue, 0, 1);
         buffer.PutInt((int)animationState, 0, 3);
     }
     
